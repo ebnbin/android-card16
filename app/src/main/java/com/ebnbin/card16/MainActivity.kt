@@ -1,5 +1,5 @@
 package com.ebnbin.card16
 
-import android.app.Activity
+import com.ebnbin.eb.app.EBActivity
 
-class MainActivity : Activity()
+class MainActivity : EBActivity()

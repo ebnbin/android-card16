@@ -1,1 +1,4 @@
 include ':app'
+
+include ':eb'
+project(':eb').projectDir = file('./../android-eb/eb')
