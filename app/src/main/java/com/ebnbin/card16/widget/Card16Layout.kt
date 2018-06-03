@@ -9,7 +9,7 @@ import kotlin.math.min
 /**
  * 16 卡片布局.
  *
- * 限制宽高. 忽略边距.
+ * 忽略边距.
  */
 class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0,
         defStyleRes: Int = 0) : ViewGroup(context, attrs, defStyleAttr, defStyleRes) {
@@ -24,11 +24,11 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+
         val widthMeasureSpecSize = MeasureSpec.getSize(widthMeasureSpec)
         val heightMeasureSpecSize = MeasureSpec.getSize(heightMeasureSpec)
         val minMeasureSpecSize = min(widthMeasureSpecSize, heightMeasureSpecSize)
-        setMeasuredDimension(minMeasureSpecSize, minMeasureSpecSize)
-
         val spacing = SPACING_DP.dpInt
         val childSize = (minMeasureSpecSize - (GRID + 1) * spacing) / GRID
         val childMeasureSpec = MeasureSpec.makeMeasureSpec(childSize, MeasureSpec.EXACTLY)
@@ -39,16 +39,19 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
-        val size = r - l
+        val width = r - l
+        val height = b - t
+        val minSize = min(width, height)
         val spacing = SPACING_DP.dpInt
-        val childSize = (size - (GRID + 1) * spacing) / GRID
-        val firstSpacing = (size - (GRID - 1) * spacing - GRID * childSize) / 2
+        val childSize = (minSize - (GRID + 1) * spacing) / GRID
+        val leftSpacing = (width - (GRID - 1) * spacing - GRID * childSize) / 2
+        val topSpacing = (height - (GRID - 1) * spacing - GRID * childSize) / 2
         for (index in 0 until childCount) {
             val cardLayout = getChildAt(index) as? CardLayout ?: continue
             val row = cardLayout.row
             val column = cardLayout.column
-            val childL = firstSpacing + (childSize + spacing) * column
-            val childT = firstSpacing + (childSize + spacing) * row
+            val childL = leftSpacing + (childSize + spacing) * column
+            val childT = topSpacing + (childSize + spacing) * row
             val childR = childL + childSize
             val childB = childT + childSize
             cardLayout.layout(childL, childT, childR, childB)
