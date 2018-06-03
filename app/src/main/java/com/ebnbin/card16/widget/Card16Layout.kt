@@ -13,10 +13,12 @@ import kotlin.math.min
  */
 class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0,
         defStyleRes: Int = 0) : ViewGroup(context, attrs, defStyleAttr, defStyleRes) {
-    private val cardLayouts = Array(GRID) {
-        Array(GRID) {
-            CardLayout(this.context).apply {
-                this@Card16Layout.addView(this)
+    init {
+        for (row in 0 until GRID) {
+            for (column in 0 until GRID) {
+                val cardLayout = CardLayout(this.context)
+                cardLayout.setIndex(row, column)
+                addView(cardLayout)
             }
         }
     }
@@ -26,6 +28,14 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
         val heightMeasureSpecSize = MeasureSpec.getSize(heightMeasureSpec)
         val minMeasureSpecSize = min(widthMeasureSpecSize, heightMeasureSpecSize)
         setMeasuredDimension(minMeasureSpecSize, minMeasureSpecSize)
+
+        val spacing = SPACING_DP.dpInt
+        val childSize = (minMeasureSpecSize - (GRID + 1) * spacing) / GRID
+        val childMeasureSpec = MeasureSpec.makeMeasureSpec(childSize, MeasureSpec.EXACTLY)
+        for (index in 0 until childCount) {
+            val cardLayout = getChildAt(index) as? CardLayout ?: continue
+            cardLayout.measure(childMeasureSpec, childMeasureSpec)
+        }
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
@@ -33,15 +43,15 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
         val spacing = SPACING_DP.dpInt
         val childSize = (size - (GRID + 1) * spacing) / GRID
         val firstSpacing = (size - (GRID - 1) * spacing - GRID * childSize) / 2
-
-        cardLayouts.forEachIndexed { rowIndex, row ->
-            row.forEachIndexed { columnIndex, cardLayout ->
-                val childL = firstSpacing + (childSize + spacing) * columnIndex
-                val childT = firstSpacing + (childSize + spacing) * rowIndex
-                val childR = childL + childSize
-                val childB = childT + childSize
-                cardLayout.layout(childL, childT, childR, childB)
-            }
+        for (index in 0 until childCount) {
+            val cardLayout = getChildAt(index) as? CardLayout ?: continue
+            val row = cardLayout.row
+            val column = cardLayout.column
+            val childL = firstSpacing + (childSize + spacing) * column
+            val childT = firstSpacing + (childSize + spacing) * row
+            val childR = childL + childSize
+            val childB = childT + childSize
+            cardLayout.layout(childL, childT, childR, childB)
         }
     }
 
