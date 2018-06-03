@@ -44,6 +44,7 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
         val minSize = min(width, height)
         val spacing = SPACING_DP.dpInt
         val childSize = (minSize - (GRID + 1) * spacing) / GRID
+        cardScale = ((GRID - 1) * spacing + GRID * childSize).toFloat() / childSize
         val leftSpacing = (width - (GRID - 1) * spacing - GRID * childSize) / 2
         val topSpacing = (height - (GRID - 1) * spacing - GRID * childSize) / 2
         for (index in 0 until childCount) {
@@ -55,6 +56,23 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
             val childR = childL + childSize
             val childB = childT + childSize
             cardLayout.layout(childL, childT, childR, childB)
+        }
+    }
+
+    var cardScale = 0f
+
+    fun setOtherCardsVisibility(row: Int, column: Int, visibility: Int) {
+        for (index in 0 until childCount) {
+            val cardLayout = getChildAt(index) as? CardLayout ?: continue
+            if (cardLayout.row == row && cardLayout.column == column) continue
+            cardLayout.visibility = visibility
+        }
+    }
+
+    fun setAllCardsClickable(isClickable: Boolean) {
+        for (index in 0 until childCount) {
+            val cardLayout = getChildAt(index) as? CardLayout ?: continue
+            cardLayout.isClickable = isClickable
         }
     }
 
