@@ -279,44 +279,31 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
         elevationInObjectAnimator.interpolator = AccelerateDecelerateInterpolator()
 
         val rotationXYPropertyName = if (isHorizontal) "rotationY" else "rotationX"
-        val rotationXYFromValue = 0f
-        var rotationXY180OutObjectAnimator: ObjectAnimator? = null
-        var rotationXY180OutAnimatorListener: Animator.AnimatorListener? = null
-        var rotationXY180InObjectAnimator: ObjectAnimator? = null
-        var rotationXY360ObjectAnimator: ObjectAnimator? = null
-        if (is180) {
-            val rotationXY180OutToClockwiseSign = if (isClockwise) -1 else 1
-            val rotationXY180OutToValue = rotationXY180OutToClockwiseSign * 90f
-            rotationXY180OutObjectAnimator = ObjectAnimator.ofFloat(this, rotationXYPropertyName, rotationXYFromValue,
-                    rotationXY180OutToValue)
-            rotationXY180OutObjectAnimator.duration = rotationXYDuration / 2L
-            rotationXY180OutObjectAnimator.interpolator = AccelerateInterpolator()
-            rotationXY180OutAnimatorListener = object : AnimatorListenerAdapter() {
-                override fun onAnimationEnd(animation: Animator?) {
-                    super.onAnimationEnd(animation)
+        val rotationXYOutFromValue = 0f
+        val rotationXYOutToClockwiseSign = if (isClockwise) -1 else 1
+        val rotationXYOutDegrees = if (is180) 90f else 180f
+        val rotationXYOutToValue = rotationXYOutToClockwiseSign * rotationXYOutDegrees
+        val rotationXYOutObjectAnimator = ObjectAnimator.ofFloat(this, rotationXYPropertyName, rotationXYOutFromValue,
+                rotationXYOutToValue)
+        rotationXYOutObjectAnimator.duration = rotationXYDuration / 2L
+        rotationXYOutObjectAnimator.interpolator = AccelerateInterpolator()
+        val rotationXYOutAnimatorListener = object : AnimatorListenerAdapter() {
+            override fun onAnimationEnd(animation: Animator?) {
+                super.onAnimationEnd(animation)
 
-                    onCardCut?.invoke()
-                }
+                onCardCut?.invoke()
             }
-
-            val rotationXY180InFromClockwiseSign = if (isClockwise) 1 else -1
-            val rotationXY180InFromValue = rotationXY180InFromClockwiseSign * 90f
-            rotationXY180InObjectAnimator = ObjectAnimator.ofFloat(this, rotationXYPropertyName,
-                    rotationXY180InFromValue, 0f)
-            rotationXY180InObjectAnimator.duration = rotationXYDuration - rotationXY180OutObjectAnimator.duration
-            rotationXY180InObjectAnimator.interpolator = DecelerateInterpolator()
-        } else {
-            val rotationXY360ToClockwiseSign = if (isClockwise) -1 else 1
-            val rotationXY360ToValue = rotationXY360ToClockwiseSign * 360f
-            rotationXY360ObjectAnimator = ObjectAnimator.ofFloat(this, rotationXYPropertyName, rotationXYFromValue,
-                    rotationXY360ToValue)
-            rotationXY360ObjectAnimator.duration = rotationXYDuration
-            rotationXY360ObjectAnimator.interpolator = AccelerateDecelerateInterpolator()
         }
+
+        val rotationXYInFromClockwiseSign = if (isClockwise) 1 else -1
+        val rotationXYInFromValue = rotationXYInFromClockwiseSign * rotationXYOutDegrees
+        val rotationXYInObjectAnimator = ObjectAnimator.ofFloat(this, rotationXYPropertyName, rotationXYInFromValue,
+                0f)
+        rotationXYInObjectAnimator.duration = rotationXYDuration - rotationXYOutObjectAnimator.duration
+        rotationXYInObjectAnimator.interpolator = DecelerateInterpolator()
+
         val rotationXYAnimatorUpdateListener = object : ValueAnimator.AnimatorUpdateListener {
             private var isFront: Boolean? = null
-
-            private var isCut = false
 
             override fun onAnimationUpdate(animation: ValueAnimator?) {
                 val rotationXY = animation?.animatedValue as Float? ?: return
@@ -329,14 +316,6 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
                             getChildAt(0)?.visibility = View.GONE
 
                             onCardBack?.invoke()
-
-                            if (animation === rotationXY360ObjectAnimator) {
-                                if (!isCut) {
-                                    isCut = true
-
-                                    onCardCut?.invoke()
-                                }
-                            }
                         }
                     }
                     else -> {
@@ -352,10 +331,7 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
         }
 
         val rotationXYAnimatorSet = AnimatorSet()
-        if (is180)
-            rotationXYAnimatorSet.playSequentially(rotationXY180OutObjectAnimator, rotationXY180InObjectAnimator)
-        else
-            rotationXYAnimatorSet.playSequentially(rotationXY360ObjectAnimator)
+        rotationXYAnimatorSet.playSequentially(rotationXYOutObjectAnimator, rotationXYInObjectAnimator)
 
         var translationXFromValue: Float? = null
         var translationYFromValue: Float? = null
@@ -446,12 +422,9 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
             override fun onAnimationStart(animation: Animator?) {
                 super.onAnimationStart(animation)
 
-                rotationXY180OutObjectAnimator?.addUpdateListener(rotationXYAnimatorUpdateListener)
-                if (rotationXY180OutAnimatorListener != null) {
-                    rotationXY180OutObjectAnimator?.addListener(rotationXY180OutAnimatorListener)
-                }
-                rotationXY180InObjectAnimator?.addUpdateListener(rotationXYAnimatorUpdateListener)
-                rotationXY360ObjectAnimator?.addUpdateListener(rotationXYAnimatorUpdateListener)
+                rotationXYOutObjectAnimator.addListener(rotationXYOutAnimatorListener)
+                rotationXYOutObjectAnimator.addUpdateListener(rotationXYAnimatorUpdateListener)
+                rotationXYInObjectAnimator.addUpdateListener(rotationXYAnimatorUpdateListener)
                 if (rotationXYTranslationScaleAnimatorListener != null) {
                     rotationXYTranslationScaleAnimatorSet.addListener(rotationXYTranslationScaleAnimatorListener)
                 }
@@ -461,7 +434,7 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
                 visibility = View.VISIBLE
 
                 elevation = elevationInFromValue
-                if (isHorizontal) rotationY = rotationXYFromValue else rotationX = rotationXYFromValue
+                if (isHorizontal) rotationY = rotationXYOutFromValue else rotationX = rotationXYOutFromValue
                 if (translationXFromValue != null) {
                     translationX = translationXFromValue
                 }
@@ -484,12 +457,9 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
 
                 animatorSet.removeListener(this)
 
-                rotationXY180OutObjectAnimator?.removeUpdateListener(rotationXYAnimatorUpdateListener)
-                if (rotationXY180OutAnimatorListener != null) {
-                    rotationXY180OutObjectAnimator?.removeListener(rotationXY180OutAnimatorListener)
-                }
-                rotationXY180InObjectAnimator?.removeUpdateListener(rotationXYAnimatorUpdateListener)
-                rotationXY360ObjectAnimator?.removeUpdateListener(rotationXYAnimatorUpdateListener)
+                rotationXYOutObjectAnimator.removeListener(rotationXYOutAnimatorListener)
+                rotationXYOutObjectAnimator.removeUpdateListener(rotationXYAnimatorUpdateListener)
+                rotationXYInObjectAnimator.removeUpdateListener(rotationXYAnimatorUpdateListener)
                 if (rotationXYTranslationScaleAnimatorListener != null) {
                     rotationXYTranslationScaleAnimatorSet.removeListener(rotationXYTranslationScaleAnimatorListener)
                 }
