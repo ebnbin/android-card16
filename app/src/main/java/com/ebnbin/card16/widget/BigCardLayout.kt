@@ -14,11 +14,7 @@ import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.widget.Button
 import com.ebnbin.eb.util.dp
-import com.ebnbin.eb.util.dpInt
 import com.ebnbin.eb.util.sp
-import com.ebnbin.eb.view.getCenterX
-import com.ebnbin.eb.view.getCenterY
-import kotlin.math.min
 
 /**
  * 大卡片布局.
@@ -34,7 +30,7 @@ class BigCardLayout @JvmOverloads constructor(context: Context, attrs: Attribute
     private val button = Button(this.context).apply {
         visibility = View.GONE
         text = "BigCardLayout"
-        textSize = 32f.sp
+        textSize = 16f.sp
         this@BigCardLayout.addView(this, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
     }
 
@@ -95,27 +91,20 @@ class BigCardLayout @JvmOverloads constructor(context: Context, attrs: Attribute
             }
         }
 
-        val width = getCard16Layout()?.width ?: 0
-        val height = getCard16Layout()?.height ?: 0
-        val minSize = min(width, height)
-        val spacing = Card16Layout.SPACING_DP.dpInt
-        val childSize = (minSize - (Card16Layout.GRID + 1) * spacing) / Card16Layout.GRID
-        val leftSpacing = (width - (Card16Layout.GRID - 1) * spacing - Card16Layout.GRID * childSize) / 2
-        val topSpacing = (height - (Card16Layout.GRID - 1) * spacing - Card16Layout.GRID * childSize) / 2
-        val childL = leftSpacing + (childSize + spacing) * cardLayout.column
-        val childT = topSpacing + (childSize + spacing) * cardLayout.row
-        val childR = childL + childSize
-        val childB = childT + childSize
-        val childCenterX = (childL + childR) / 2f
-        val childCenterY = (childT + childB) / 2f
-
-        val translationXFromValue = if (isZoomIn) (childCenterX - getCard16Layout().getCenterX()) / 2f else 0f
-        val translationXToValue = if (isZoomIn) 0f else (childCenterX - getCard16Layout().getCenterX()) / 2f
+        // TODO: CardLayout index 有效性.
+        val cardCenterX = getCard16Layout()?.getCardCenterX(cardLayout.row, cardLayout.column) ?: 0
+        val bigCardCenterX = getCard16Layout()?.bigCardCenterX ?: 0
+        val offsetX = (cardCenterX - bigCardCenterX) / 2f
+        val translationXFromValue = if (isZoomIn) offsetX else 0f
+        val translationXToValue = if (isZoomIn) 0f else offsetX
         val translationXObjectAnimator = ObjectAnimator.ofFloat(this, "translationX", translationXFromValue,
                 translationXToValue)
 
-        val translationYFromValue = if (isZoomIn) (childCenterY - getCard16Layout().getCenterY()) / 2f else 0f
-        val translationYToValue = if (isZoomIn) 0f else (childCenterY - getCard16Layout().getCenterY()) / 2f
+        val cardCenterY = getCard16Layout()?.getCardCenterY(cardLayout.row, cardLayout.column) ?: 0
+        val bigCardCenterY = getCard16Layout()?.bigCardCenterY ?: 0
+        val offsetY = (cardCenterY - bigCardCenterY) / 2f
+        val translationYFromValue = if (isZoomIn) offsetY else 0f
+        val translationYToValue = if (isZoomIn) 0f else offsetY
         val translationYObjectAnimator = ObjectAnimator.ofFloat(this, "translationY", translationYFromValue,
                 translationYToValue)
 
@@ -124,7 +113,7 @@ class BigCardLayout @JvmOverloads constructor(context: Context, attrs: Attribute
         val translationZObjectAnimator = ObjectAnimator.ofFloat(this, "translationZ", translationZFromValue,
                 translationZToValue)
 
-        val cardScaleInverse = getCard16Layout()?.cardScaleInverse ?: 1f
+        val cardScaleInverse = getCard16Layout()?.scaleOut ?: 1f
         val scaleFromValue = if (isZoomIn) (1f - cardScaleInverse) / 2f + cardScaleInverse else 1f
         val scaleToValue = if (isZoomIn) 1f else (1f - cardScaleInverse) / 2f + cardScaleInverse
         val scaleXObjectAnimator = ObjectAnimator.ofFloat(this, "scaleX", scaleFromValue, scaleToValue)
@@ -144,14 +133,14 @@ class BigCardLayout @JvmOverloads constructor(context: Context, attrs: Attribute
                 super.onAnimationStart(animation)
 
                 if (isZoomIn) return
-                getCard16Layout()?.setOtherCardsVisibility(cardLayout.row, cardLayout.column, View.VISIBLE)
+                getCard16Layout()?.setAllCardLayoutsVisibility(View.VISIBLE, cardLayout.row, cardLayout.column)
             }
 
             override fun onAnimationEnd(animation: Animator?) {
                 super.onAnimationEnd(animation)
 
                 if (!isZoomIn) return
-                getCard16Layout()?.setOtherCardsVisibility(cardLayout.row, cardLayout.column, View.GONE)
+                getCard16Layout()?.setAllCardLayoutsVisibility(View.GONE, cardLayout.row, cardLayout.column)
             }
         }
 
@@ -168,7 +157,7 @@ class BigCardLayout @JvmOverloads constructor(context: Context, attrs: Attribute
                 rotationXYObjectAnimator.addUpdateListener(rotationXYAnimatorUpdateListener)
                 rotationXYTranslationScaleAnimatorSet.addListener(rotationXYTranslationScaleAnimatorListener)
 
-                getCard16Layout()?.setAllCardsClickable(false)
+                getCard16Layout()?.setAllCardLayoutsClickable(false)
 
                 visibility = View.VISIBLE
 
@@ -191,7 +180,7 @@ class BigCardLayout @JvmOverloads constructor(context: Context, attrs: Attribute
                 rotationXYObjectAnimator.removeUpdateListener(rotationXYAnimatorUpdateListener)
                 rotationXYTranslationScaleAnimatorSet.removeListener(rotationXYTranslationScaleAnimatorListener)
 
-                getCard16Layout()?.setAllCardsClickable(true)
+                getCard16Layout()?.setAllCardLayoutsClickable(true)
 
                 visibility = if (isZoomIn) View.VISIBLE else View.GONE
 

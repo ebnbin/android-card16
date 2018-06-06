@@ -186,7 +186,7 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
 
                 rotationXYObjectAnimator.addUpdateListener(rotationXYAnimatorUpdateListener)
 
-                getCard16Layout()?.setAllCardsClickable(false)
+                getCard16Layout()?.setAllCardLayoutsClickable(false)
 
                 visibility = View.VISIBLE
 
@@ -204,7 +204,7 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
 
                 rotationXYObjectAnimator.removeUpdateListener(rotationXYAnimatorUpdateListener)
 
-                getCard16Layout()?.setAllCardsClickable(true)
+                getCard16Layout()?.setAllCardLayoutsClickable(true)
 
                 visibility = if (isIn) View.VISIBLE else View.GONE
 
@@ -352,7 +352,7 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
                 rotationXYOutObjectAnimator.addUpdateListener(rotationXYAnimatorUpdateListener)
                 rotationXYInObjectAnimator.addUpdateListener(rotationXYAnimatorUpdateListener)
 
-                getCard16Layout()?.setAllCardsClickable(false)
+                getCard16Layout()?.setAllCardLayoutsClickable(false)
 
                 visibility = View.VISIBLE
 
@@ -371,7 +371,7 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
                 rotationXYOutObjectAnimator.removeUpdateListener(rotationXYAnimatorUpdateListener)
                 rotationXYInObjectAnimator.removeUpdateListener(rotationXYAnimatorUpdateListener)
 
-                getCard16Layout()?.setAllCardsClickable(true)
+                getCard16Layout()?.setAllCardLayoutsClickable(true)
 
                 onEnd?.invoke()
             }
@@ -450,7 +450,7 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
         val translationZObjectAnimator = ObjectAnimator.ofFloat(this, "translationZ", translationZFromValue,
                 translationZToValue)
 
-        val cardScale = getCard16Layout()?.cardScale ?: 1f
+        val cardScale = getCard16Layout()?.scaleIn ?: 1f
         val scaleFromValue = if (isZoomIn) 1f else (cardScale - 1f) / 2f + 1f
         val scaleToValue = if (isZoomIn) (cardScale - 1f) / 2f + 1f else 1f
         val scaleXObjectAnimator = ObjectAnimator.ofFloat(this, "scaleX", scaleFromValue, scaleToValue)
@@ -478,7 +478,7 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
 
                 rotationXYObjectAnimator.addUpdateListener(rotationXYAnimatorUpdateListener)
 
-                getCard16Layout()?.setAllCardsClickable(false)
+                getCard16Layout()?.setAllCardLayoutsClickable(false)
 
                 visibility = View.VISIBLE
 
@@ -500,7 +500,7 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
 
                 rotationXYObjectAnimator.removeUpdateListener(rotationXYAnimatorUpdateListener)
 
-                getCard16Layout()?.setAllCardsClickable(true)
+                getCard16Layout()?.setAllCardLayoutsClickable(true)
 
                 visibility = if (isZoomIn) View.GONE else View.VISIBLE
 
