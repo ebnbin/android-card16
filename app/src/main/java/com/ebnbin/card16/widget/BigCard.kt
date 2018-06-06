@@ -18,10 +18,13 @@ import com.ebnbin.eb.util.sp
  * 大卡片.
  */
 class BigCard(context: Context) : BaseCard(context) {
+    override val defElevation = DEF_ELEVATION_DP.dp
+    override val maxElevation = MAX_ELEVATION_DP.dp
+
     init {
         visibility = View.GONE
-        elevation = DEF_ELEVATION
-        radius = DEF_RADIUS
+        elevation = DEF_ELEVATION_DP.dp
+        radius = DEF_RADIUS_DP.dp
     }
 
     private val button = Button(this.context).apply {
@@ -44,8 +47,8 @@ class BigCard(context: Context) : BaseCard(context) {
             onEnd: (() -> Unit)? = null,
             onCardFront: (() -> Unit)? = null,
             onCardBack: (() -> Unit)? = null) {
-        val elevationFromValue = if (isZoomIn) MAX_ELEVATION else DEF_ELEVATION
-        val elevationToValue = if (isZoomIn) DEF_ELEVATION else MAX_ELEVATION
+        val elevationFromValue = if (isZoomIn) MAX_ELEVATION_DP.dp else DEF_ELEVATION_DP.dp
+        val elevationToValue = if (isZoomIn) DEF_ELEVATION_DP.dp else MAX_ELEVATION_DP.dp
         val elevationObjectAnimator = ObjectAnimator.ofFloat(this, "elevation", elevationFromValue, elevationToValue)
         elevationObjectAnimator.duration = elevationDuration
         elevationObjectAnimator.interpolator = AccelerateDecelerateInterpolator()
@@ -210,17 +213,17 @@ class BigCard(context: Context) : BaseCard(context) {
 
     companion object {
         /**
-         * 默认高度.
+         * 默认高度 dp.
          */
-        private val DEF_ELEVATION = 8f.dp
+        private const val DEF_ELEVATION_DP = 8f
         /**
-         * 最大高度.
+         * 最大高度 dp.
          */
-        private val MAX_ELEVATION = 32f.dp
+        private const val MAX_ELEVATION_DP = 32f
 
         /**
-         * 默认圆角.
+         * 默认圆角 dp.
          */
-        private val DEF_RADIUS = 8f.dp
+        private const val DEF_RADIUS_DP = 8f
     }
 }

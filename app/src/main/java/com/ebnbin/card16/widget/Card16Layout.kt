@@ -233,6 +233,29 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
             row in 0 until GRID && column in 0 until GRID
 
     /**
+     * 根据行列返回 [Card].
+     */
+    fun getCard(row: Int, column: Int): Card {
+        if (!isIndexValid(row, column)) throw EBRuntimeException()
+        for (index in 0 until childCount) {
+            val child = getChildAt(index)
+            if (child is Card && child.row == row && child.column == column) return child
+        }
+        throw EBRuntimeException()
+    }
+
+    /**
+     * 返回 [BigCard].
+     */
+    fun getBigCard(): BigCard {
+        for (index in 0 until childCount) {
+            val child = getChildAt(index)
+            if (child is BigCard) return child
+        }
+        throw EBRuntimeException()
+    }
+
+    /**
      * 设置全部 [Card] 的可见性.
      *
      * @param rowExcept 除外的 [Card] 的行.
@@ -262,29 +285,6 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
             if (card.row == rowExcept && card.column == columnExcept) continue
             card.isClickable = isClickable
         }
-    }
-
-    /**
-     * 根据行列返回 [Card].
-     */
-    fun getCard(row: Int, column: Int): Card {
-        if (!isIndexValid(row, column)) throw EBRuntimeException()
-        for (index in 0 until childCount) {
-            val child = getChildAt(index)
-            if (child is Card && child.row == row && child.column == column) return child
-        }
-        throw EBRuntimeException()
-    }
-
-    /**
-     * 返回 [BigCard].
-     */
-    fun getBigCard(): BigCard {
-        for (index in 0 until childCount) {
-            val child = getChildAt(index)
-            if (child is BigCard) return child
-        }
-        throw EBRuntimeException()
     }
 
     companion object {
