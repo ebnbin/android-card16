@@ -6,7 +6,6 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.content.Context
-import android.util.AttributeSet
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.AccelerateInterpolator
@@ -17,12 +16,11 @@ import com.ebnbin.eb.view.getCenterX
 import com.ebnbin.eb.view.getCenterY
 
 /**
- * 卡片布局.
+ * 卡片.
  */
-class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
-        BaseCardLayout(context, attrs, defStyleAttr) {
+class Card(context: Context) : BaseCardLayout(context) {
     private val button = Button(this.context).apply {
-        this@CardLayout.addView(this, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+        this@Card.addView(this, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
     }
 
     init {
@@ -185,7 +183,7 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
 
                 rotationXYObjectAnimator.addUpdateListener(rotationXYAnimatorUpdateListener)
 
-                getCard16Layout()?.setAllCardLayoutsClickable(false)
+                getCard16Layout()?.setAllCardsClickable(false)
 
                 visibility = View.VISIBLE
 
@@ -203,7 +201,7 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
 
                 rotationXYObjectAnimator.removeUpdateListener(rotationXYAnimatorUpdateListener)
 
-                getCard16Layout()?.setAllCardLayoutsClickable(true)
+                getCard16Layout()?.setAllCardsClickable(true)
 
                 visibility = if (isIn) View.VISIBLE else View.GONE
 
@@ -351,7 +349,7 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
                 rotationXYOutObjectAnimator.addUpdateListener(rotationXYAnimatorUpdateListener)
                 rotationXYInObjectAnimator.addUpdateListener(rotationXYAnimatorUpdateListener)
 
-                getCard16Layout()?.setAllCardLayoutsClickable(false)
+                getCard16Layout()?.setAllCardsClickable(false)
 
                 visibility = View.VISIBLE
 
@@ -370,7 +368,7 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
                 rotationXYOutObjectAnimator.removeUpdateListener(rotationXYAnimatorUpdateListener)
                 rotationXYInObjectAnimator.removeUpdateListener(rotationXYAnimatorUpdateListener)
 
-                getCard16Layout()?.setAllCardLayoutsClickable(true)
+                getCard16Layout()?.setAllCardsClickable(true)
 
                 onEnd?.invoke()
             }
@@ -477,7 +475,7 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
 
                 rotationXYObjectAnimator.addUpdateListener(rotationXYAnimatorUpdateListener)
 
-                getCard16Layout()?.setAllCardLayoutsClickable(false)
+                getCard16Layout()?.setAllCardsClickable(false)
 
                 visibility = View.VISIBLE
 
@@ -499,13 +497,13 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
 
                 rotationXYObjectAnimator.removeUpdateListener(rotationXYAnimatorUpdateListener)
 
-                getCard16Layout()?.setAllCardLayoutsClickable(true)
+                getCard16Layout()?.setAllCardsClickable(true)
 
                 visibility = if (isZoomIn) View.GONE else View.VISIBLE
 
                 if (isZoomIn) {
-                    getCard16Layout()?.getBigCardLayout()?.animZoom(
-                            cardLayout = this@CardLayout,
+                    getCard16Layout()?.getBigCard()?.animZoom(
+                            card = this@Card,
                             isZoomIn = isZoomIn,
                             elevationDuration = elevationDuration,
                             isHorizontal = isHorizontal,

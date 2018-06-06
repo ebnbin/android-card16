@@ -6,7 +6,6 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.content.Context
-import android.util.AttributeSet
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.AccelerateInterpolator
@@ -16,10 +15,9 @@ import com.ebnbin.eb.util.dp
 import com.ebnbin.eb.util.sp
 
 /**
- * 大卡片布局.
+ * 大卡片.
  */
-class BigCardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
-        BaseCardLayout(context, attrs, defStyleAttr) {
+class BigCard(context: Context) : BaseCardLayout(context) {
     init {
         visibility = View.GONE
         elevation = DEF_ELEVATION
@@ -28,13 +26,13 @@ class BigCardLayout @JvmOverloads constructor(context: Context, attrs: Attribute
 
     private val button = Button(this.context).apply {
         visibility = View.GONE
-        text = "BigCardLayout"
+        text = "BigCard"
         textSize = 16f.sp
-        this@BigCardLayout.addView(this, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+        this@BigCard.addView(this, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
     }
 
     fun animZoom(
-            cardLayout: CardLayout,
+            card: Card,
             isZoomIn: Boolean,
             elevationDuration: Long,
             isHorizontal: Boolean,
@@ -90,8 +88,8 @@ class BigCardLayout @JvmOverloads constructor(context: Context, attrs: Attribute
             }
         }
 
-        // TODO: CardLayout index 有效性.
-        val cardCenterX = getCard16Layout()?.getCardCenterX(cardLayout.row, cardLayout.column) ?: 0
+        // TODO: Card index 有效性.
+        val cardCenterX = getCard16Layout()?.getCardCenterX(card.row, card.column) ?: 0
         val bigCardCenterX = getCard16Layout()?.bigCardCenterX ?: 0
         val offsetX = (cardCenterX - bigCardCenterX) / 2f
         val translationXFromValue = if (isZoomIn) offsetX else 0f
@@ -99,7 +97,7 @@ class BigCardLayout @JvmOverloads constructor(context: Context, attrs: Attribute
         val translationXObjectAnimator = ObjectAnimator.ofFloat(this, "translationX", translationXFromValue,
                 translationXToValue)
 
-        val cardCenterY = getCard16Layout()?.getCardCenterY(cardLayout.row, cardLayout.column) ?: 0
+        val cardCenterY = getCard16Layout()?.getCardCenterY(card.row, card.column) ?: 0
         val bigCardCenterY = getCard16Layout()?.bigCardCenterY ?: 0
         val offsetY = (cardCenterY - bigCardCenterY) / 2f
         val translationYFromValue = if (isZoomIn) offsetY else 0f
@@ -132,14 +130,14 @@ class BigCardLayout @JvmOverloads constructor(context: Context, attrs: Attribute
                 super.onAnimationStart(animation)
 
                 if (isZoomIn) return
-                getCard16Layout()?.setAllCardLayoutsVisibility(View.VISIBLE, cardLayout.row, cardLayout.column)
+                getCard16Layout()?.setAllCardsVisibility(View.VISIBLE, card.row, card.column)
             }
 
             override fun onAnimationEnd(animation: Animator?) {
                 super.onAnimationEnd(animation)
 
                 if (!isZoomIn) return
-                getCard16Layout()?.setAllCardLayoutsVisibility(View.GONE, cardLayout.row, cardLayout.column)
+                getCard16Layout()?.setAllCardsVisibility(View.GONE, card.row, card.column)
             }
         }
 
@@ -156,7 +154,7 @@ class BigCardLayout @JvmOverloads constructor(context: Context, attrs: Attribute
                 rotationXYObjectAnimator.addUpdateListener(rotationXYAnimatorUpdateListener)
                 rotationXYTranslationScaleAnimatorSet.addListener(rotationXYTranslationScaleAnimatorListener)
 
-                getCard16Layout()?.setAllCardLayoutsClickable(false)
+                getCard16Layout()?.setAllCardsClickable(false)
 
                 visibility = View.VISIBLE
 
@@ -179,14 +177,14 @@ class BigCardLayout @JvmOverloads constructor(context: Context, attrs: Attribute
                 rotationXYObjectAnimator.removeUpdateListener(rotationXYAnimatorUpdateListener)
                 rotationXYTranslationScaleAnimatorSet.removeListener(rotationXYTranslationScaleAnimatorListener)
 
-                getCard16Layout()?.setAllCardLayoutsClickable(true)
+                getCard16Layout()?.setAllCardsClickable(true)
 
                 visibility = if (isZoomIn) View.VISIBLE else View.GONE
 
                 if (isZoomIn) {
                     setOnClickListener {
                         animZoom(
-                                cardLayout = cardLayout,
+                                card = card,
                                 isZoomIn = !isZoomIn,
                                 elevationDuration = elevationDuration,
                                 isHorizontal = isHorizontal,
@@ -197,7 +195,7 @@ class BigCardLayout @JvmOverloads constructor(context: Context, attrs: Attribute
                     }
                 } else {
                     setOnClickListener(null)
-                    cardLayout.animZoom(
+                    card.animZoom(
                             isZoomIn = isZoomIn,
                             elevationDuration = elevationDuration,
                             isHorizontal = isHorizontal,

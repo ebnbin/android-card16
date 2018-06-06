@@ -9,25 +9,25 @@ import kotlin.math.min
 /**
  * 16 卡片布局.
  *
- * 包含 16 个 [CardLayout] 和 1 个 [BigCardLayout].
+ * 包含 16 个 [Card] 和 1 个 [BigCard].
  *
  * 不要设置 padding.
  */
 class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0,
         defStyleRes: Int = 0) : ViewGroup(context, attrs, defStyleAttr, defStyleRes) {
     init {
-        // 添加 16 个 CardLayout.
+        // 添加 16 个 Card.
         for (row in 0 until GRID) {
             for (column in 0 until GRID) {
-                val cardLayout = CardLayout(this.context)
-                cardLayout.setIndex(row, column)
-                addView(cardLayout)
+                val card = Card(this.context)
+                card.setIndex(row, column)
+                addView(card)
             }
         }
 
-        // 添加 BigCardLayout.
-        val bigCardLayout = BigCardLayout(this.context)
-        addView(bigCardLayout)
+        // 添加 BigCard.
+        val bigCard = BigCard(this.context)
+        addView(bigCard)
     }
 
     /**
@@ -54,12 +54,12 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
     private var size = 0
 
     /**
-     * [CardLayout] 宽高.
+     * [Card] 宽高.
      */
     private var cardSize = 0
 
     /**
-     * [BigCardLayout] 宽高.
+     * [BigCard] 宽高.
      */
     private var bigCardSize = 0
 
@@ -81,79 +81,79 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
     private var spacingBottom = 0
 
     /**
-     * [CardLayout] 左位置.
+     * [Card] 左位置.
      */
     private val cardLefts = Array(GRID) { Array(GRID) { 0 } }
     /**
-     * [CardLayout] 上位置.
+     * [Card] 上位置.
      */
     private val cardTops = Array(GRID) { Array(GRID) { 0 } }
     /**
-     * [CardLayout] 右位置.
+     * [Card] 右位置.
      */
     private val cardRights = Array(GRID) { Array(GRID) { 0 } }
     /**
-     * [CardLayout] 下位置.
+     * [Card] 下位置.
      */
     private val cardBottoms = Array(GRID) { Array(GRID) { 0 } }
     /**
-     * [CardLayout] 水平方向中心位置.
+     * [Card] 水平方向中心位置.
      */
     private val cardCenterXs = Array(GRID) { Array(GRID) { 0 } }
     /**
-     * [CardLayout] 垂直方向中心位置.
+     * [Card] 垂直方向中心位置.
      */
     private val cardCenterYs = Array(GRID) { Array(GRID) { 0 } }
 
     /**
-     * [BigCardLayout] 左位置.
+     * [BigCard] 左位置.
      */
     var bigCardLeft = 0
         private set
     /**
-     * [BigCardLayout] 上位置.
+     * [BigCard] 上位置.
      */
     var bigCardTop = 0
         private set
     /**
-     * [BigCardLayout] 右位置.
+     * [BigCard] 右位置.
      */
     var bigCardRight = 0
         private set
     /**
-     * [BigCardLayout] 下位置.
+     * [BigCard] 下位置.
      */
     var bigCardBottom = 0
         private set
     /**
-     * [BigCardLayout] 水平方向中心位置.
+     * [BigCard] 水平方向中心位置.
      */
     var bigCardCenterX = 0
         private set
     /**
-     * [BigCardLayout] 垂直方向中心位置.
+     * [BigCard] 垂直方向中心位置.
      */
     var bigCardCenterY = 0
         private set
 
     /**
-     * 从 [CardLayout] 放大到 [BigCardLayout] 比例. 大等于 1f.
+     * 从 [Card] 放大到 [BigCard] 比例. 大等于 1f.
      */
     var scaleIn = 1f
         private set
     /**
-     * 从 [BigCardLayout] 缩小到 [CardLayout] 比例. 小等于 1f.
+     * 从 [BigCard] 缩小到 [Card] 比例. 小等于 1f.
      */
     var scaleOut = 1f
         private set
 
     /**
-     * [CardLayout] 测量宽高.
+     * [Card] 测量宽高.
      */
     private var cardMeasureSpec = 0
 
     /**
-     * [BigCardLayout] 测量宽高.
+     * [BigCard] 测量宽高.
      */
     private var bigCardMeasureSpec = 0
 
@@ -205,8 +205,8 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
         for (index in 0 until childCount) {
             val child = getChildAt(index)
             when (child) {
-                is CardLayout -> child.measure(cardMeasureSpec, cardMeasureSpec)
-                is BigCardLayout -> child.measure(bigCardMeasureSpec, bigCardMeasureSpec)
+                is Card -> child.measure(cardMeasureSpec, cardMeasureSpec)
+                is BigCard -> child.measure(bigCardMeasureSpec, bigCardMeasureSpec)
             }
         }
     }
@@ -216,7 +216,7 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
         for (index in 0 until childCount) {
             val child = getChildAt(index)
             when (child) {
-                is CardLayout -> {
+                is Card -> {
                     val row = child.row
                     val column = child.column
                     if (isIndexValid(row, column)) {
@@ -224,9 +224,7 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
                                 cardBottoms[row][column])
                     }
                 }
-                is BigCardLayout -> {
-                    child.layout(bigCardLeft, bigCardTop, bigCardRight, bigCardBottom)
-                }
+                is BigCard -> child.layout(bigCardLeft, bigCardTop, bigCardRight, bigCardBottom)
             }
         }
     }
@@ -237,90 +235,90 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
     private fun isIndexValid(row: Int, column: Int) = row in 0 until GRID && column in 0 until GRID
 
     /**
-     * 根据行列返回 [CardLayout] 左位置. 如果行列无效则返回 0.
+     * 根据行列返回 [Card] 左位置. 如果行列无效则返回 0.
      */
     fun getCardLeft(row: Int, column: Int) = cardLefts.getOrNull(row)?.getOrNull(column) ?: 0
 
     /**
-     * 根据行列返回 [CardLayout] 上位置. 如果行列无效则返回 0.
+     * 根据行列返回 [Card] 上位置. 如果行列无效则返回 0.
      */
     fun getCardTop(row: Int, column: Int) = cardTops.getOrNull(row)?.getOrNull(column) ?: 0
 
     /**
-     * 根据行列返回 [CardLayout] 右位置. 如果行列无效则返回 0.
+     * 根据行列返回 [Card] 右位置. 如果行列无效则返回 0.
      */
     fun getCardRight(row: Int, column: Int) = cardRights.getOrNull(row)?.getOrNull(column) ?: 0
 
     /**
-     * 根据行列返回 [CardLayout] 下位置. 如果行列无效则返回 0.
+     * 根据行列返回 [Card] 下位置. 如果行列无效则返回 0.
      */
     fun getCardBottom(row: Int, column: Int) = cardBottoms.getOrNull(row)?.getOrNull(column) ?: 0
 
     /**
-     * 根据行列返回 [CardLayout] 水平方向中心位置. 如果行列无效则返回 0.
+     * 根据行列返回 [Card] 水平方向中心位置. 如果行列无效则返回 0.
      */
     fun getCardCenterX(row: Int, column: Int) = cardCenterXs.getOrNull(row)?.getOrNull(column) ?: 0
 
     /**
-     * 根据行列返回 [CardLayout] 垂直方向中心位置. 如果行列无效则返回 0.
+     * 根据行列返回 [Card] 垂直方向中心位置. 如果行列无效则返回 0.
      */
     fun getCardCenterY(row: Int, column: Int) = cardCenterYs.getOrNull(row)?.getOrNull(column) ?: 0
 
     /**
-     * 设置全部 [CardLayout] 的可见性.
+     * 设置全部 [Card] 的可见性.
      *
-     * @param rowExcept 除外的 [CardLayout] 的行.
+     * @param rowExcept 除外的 [Card] 的行.
      *
-     * @param columnExcept 除外的 [CardLayout] 的列.
+     * @param columnExcept 除外的 [Card] 的列.
      */
-    fun setAllCardLayoutsVisibility(visibility: Int, rowExcept: Int? = null, columnExcept: Int? = null) {
+    fun setAllCardsVisibility(visibility: Int, rowExcept: Int? = null, columnExcept: Int? = null) {
         for (index in 0 until childCount) {
-            val cardLayout = getChildAt(index) as? CardLayout ?: continue
+            val card = getChildAt(index) as? Card ?: continue
             if (rowExcept != null &&
                     columnExcept != null &&
-                    cardLayout.row == rowExcept &&
-                    cardLayout.column == columnExcept) continue
-            cardLayout.visibility = visibility
+                    card.row == rowExcept &&
+                    card.column == columnExcept) continue
+            card.visibility = visibility
         }
     }
 
     /**
-     * 设置全部 [CardLayout] 的可点击性.
+     * 设置全部 [Card] 的可点击性.
      *
-     * @param rowExcept 除外的 [CardLayout] 的行.
+     * @param rowExcept 除外的 [Card] 的行.
      *
-     * @param columnExcept 除外的 [CardLayout] 的列.
+     * @param columnExcept 除外的 [Card] 的列.
      */
-    fun setAllCardLayoutsClickable(isClickable: Boolean, rowExcept: Int? = null, columnExcept: Int? = null) {
+    fun setAllCardsClickable(isClickable: Boolean, rowExcept: Int? = null, columnExcept: Int? = null) {
         for (index in 0 until childCount) {
-            val cardLayout = getChildAt(index) as? CardLayout ?: continue
+            val card = getChildAt(index) as? Card ?: continue
             if (rowExcept != null &&
                     columnExcept != null &&
-                    cardLayout.row == rowExcept &&
-                    cardLayout.column == columnExcept) continue
-            cardLayout.isClickable = isClickable
+                    card.row == rowExcept &&
+                    card.column == columnExcept) continue
+            card.isClickable = isClickable
         }
     }
 
     /**
-     * 根据行列返回 [CardLayout].
+     * 根据行列返回 [Card].
      */
-    fun getCardLayout(row: Int, column: Int): CardLayout? {
+    fun getCard(row: Int, column: Int): Card? {
         if (!isIndexValid(row, column)) return null
         for (index in 0 until childCount) {
             val child = getChildAt(index)
-            if (child is CardLayout && child.row == row && child.column == column) return child
+            if (child is Card && child.row == row && child.column == column) return child
         }
         return null
     }
 
     /**
-     * 返回 [BigCardLayout].
+     * 返回 [BigCard].
      */
-    fun getBigCardLayout(): BigCardLayout? {
+    fun getBigCard(): BigCard? {
         for (index in 0 until childCount) {
             val child = getChildAt(index)
-            if (child is BigCardLayout) return child
+            if (child is BigCard) return child
         }
         return null
     }
