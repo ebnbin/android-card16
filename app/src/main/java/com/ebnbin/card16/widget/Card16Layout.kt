@@ -21,6 +21,8 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
                 addView(cardLayout)
             }
         }
+        val bigCardLayout = BigCardLayout(this.context)
+        addView(bigCardLayout)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -32,9 +34,14 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
         val spacing = SPACING_DP.dpInt
         val childSize = (minMeasureSpecSize - (GRID + 1) * spacing) / GRID
         val childMeasureSpec = MeasureSpec.makeMeasureSpec(childSize, MeasureSpec.EXACTLY)
+        val bigChildSize = (GRID - 1) * spacing + GRID * childSize
+        val bigChildMeasureSpec = MeasureSpec.makeMeasureSpec(bigChildSize, MeasureSpec.EXACTLY)
         for (index in 0 until childCount) {
-            val cardLayout = getChildAt(index) as? CardLayout ?: continue
-            cardLayout.measure(childMeasureSpec, childMeasureSpec)
+            val child = getChildAt(index)
+            when (child) {
+                is CardLayout -> child.measure(childMeasureSpec, childMeasureSpec)
+                is BigCardLayout -> child.measure(bigChildMeasureSpec, bigChildMeasureSpec)
+            }
         }
     }
 
@@ -44,22 +51,36 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
         val minSize = min(width, height)
         val spacing = SPACING_DP.dpInt
         val childSize = (minSize - (GRID + 1) * spacing) / GRID
+        val bigChildSize = (GRID - 1) * spacing + GRID * childSize
         cardScale = ((GRID - 1) * spacing + GRID * childSize).toFloat() / childSize
+        cardScaleInverse = 1f / cardScale
         val leftSpacing = (width - (GRID - 1) * spacing - GRID * childSize) / 2
         val topSpacing = (height - (GRID - 1) * spacing - GRID * childSize) / 2
         for (index in 0 until childCount) {
-            val cardLayout = getChildAt(index) as? CardLayout ?: continue
-            val row = cardLayout.row
-            val column = cardLayout.column
-            val childL = leftSpacing + (childSize + spacing) * column
-            val childT = topSpacing + (childSize + spacing) * row
-            val childR = childL + childSize
-            val childB = childT + childSize
-            cardLayout.layout(childL, childT, childR, childB)
+            val child = getChildAt(index)
+            when (child) {
+                is CardLayout -> {
+                    val row = child.row
+                    val column = child.column
+                    val childL = leftSpacing + (childSize + spacing) * column
+                    val childT = topSpacing + (childSize + spacing) * row
+                    val childR = childL + childSize
+                    val childB = childT + childSize
+                    child.layout(childL, childT, childR, childB)
+                }
+                is BigCardLayout -> {
+                    val childL = leftSpacing
+                    val childT = topSpacing
+                    val childR = childL + bigChildSize
+                    val childB = childT + bigChildSize
+                    child.layout(childL, childT, childR, childB)
+                }
+            }
         }
     }
 
     var cardScale = 0f
+    var cardScaleInverse = 0f
 
     fun setOtherCardsVisibility(row: Int, column: Int, visibility: Int) {
         for (index in 0 until childCount) {
@@ -76,15 +97,23 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
         }
     }
 
+    fun getBigCardLayout(): BigCardLayout? {
+        for (index in 0 until childCount) {
+            val child = getChildAt(index)
+            if (child is BigCardLayout) return child
+        }
+        return null
+    }
+
     companion object {
         /**
          * 行列数.
          */
-        private const val GRID = 4
+        const val GRID = 4
 
         /**
          * 间距 dp.
          */
-        private const val SPACING_DP = 8f
+        const val SPACING_DP = 8f
     }
 }

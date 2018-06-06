@@ -26,21 +26,16 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
         this@CardLayout.addView(this, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
     }
 
-    private var cutCount = 0
-
     init {
         setOnClickListener {
-            animCut(
+            animZoom(
+                    isZoomIn = true,
                     elevationDuration = 50L,
                     isHorizontal = false,
-                    isClockwise = scaleX != 1f,
+                    isClockwise = false,
                     is180 = true,
-                    rotationXYDuration = 400L,
-                    isFromSmallToBig = scaleX == 1f,
-                    startDelay = 0L,
-                    onCardCut = {
-                        button.text = "$row-$column ${++cutCount}"
-                    })
+                    rotationXYDuration = 200L,
+                    startDelay = 0L)
         }
     }
 
@@ -295,7 +290,7 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
             }
         }
 
-        val rotationXYInFromClockwiseSign = if (isClockwise) 1 else -1
+        val rotationXYInFromClockwiseSign = -rotationXYOutToClockwiseSign
         val rotationXYInFromValue = rotationXYInFromClockwiseSign * rotationXYOutDegrees
         val rotationXYInObjectAnimator = ObjectAnimator.ofFloat(this, rotationXYPropertyName, rotationXYInFromValue,
                 0f)
@@ -465,6 +460,149 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
                 }
 
                 getCard16Layout()?.setAllCardsClickable(true)
+
+                onEnd?.invoke()
+            }
+        })
+        animatorSet.start()
+    }
+
+    fun animZoom(
+            isZoomIn: Boolean,
+            elevationDuration: Long,
+            isHorizontal: Boolean,
+            isClockwise: Boolean,
+            is180: Boolean,
+            rotationXYDuration: Long,
+            startDelay: Long,
+            onStart: (() -> Unit)? = null,
+            onEnd: (() -> Unit)? = null,
+            onCardFront: (() -> Unit)? = null,
+            onCardBack: (() -> Unit)? = null) {
+        val elevationFromValue = if (isZoomIn) DEF_ELEVATION else MAX_ELEVATION
+        val elevationToValue = if (isZoomIn) MAX_ELEVATION else DEF_ELEVATION
+        val elevationObjectAnimator = ObjectAnimator.ofFloat(this, "elevation", elevationFromValue, elevationToValue)
+        elevationObjectAnimator.duration = elevationDuration
+        elevationObjectAnimator.interpolator = AccelerateDecelerateInterpolator()
+
+        val rotationXYPropertyName = if (isHorizontal) "rotationY" else "rotationX"
+        val rotationXYDegrees = if (is180) 90f else 180f
+        val rotationXYFromClockwiseSign = if (isClockwise) 1 else -1
+        val rotationXYFromValue = if (isZoomIn) 0f else rotationXYFromClockwiseSign * rotationXYDegrees
+        val rotationXYToClockwiseSign = -rotationXYFromClockwiseSign
+        val rotationXYToValue = if (isZoomIn) rotationXYToClockwiseSign * rotationXYDegrees else 0f
+        val rotationXYObjectAnimator = ObjectAnimator.ofFloat(this, rotationXYPropertyName, rotationXYFromValue,
+                rotationXYToValue)
+        rotationXYObjectAnimator.duration = rotationXYDuration
+        rotationXYObjectAnimator.interpolator = if (isZoomIn) AccelerateInterpolator() else DecelerateInterpolator()
+        val rotationXYAnimatorUpdateListener = object : ValueAnimator.AnimatorUpdateListener {
+            private var isFront: Boolean? = null
+
+            override fun onAnimationUpdate(animation: ValueAnimator?) {
+                val rotationXY = animation?.animatedValue as Float? ?: return
+                val validRotationXY = (rotationXY % 360f + 360f) % 360f
+                when (validRotationXY) {
+                    0f, 90f, 180f, 270f -> Unit
+                    in 90f..270f -> {
+                        if (isFront != false) {
+                            isFront = false
+                            getChildAt(0)?.visibility = View.GONE
+
+                            onCardBack?.invoke()
+                        }
+                    }
+                    else -> {
+                        if (isFront != true) {
+                            isFront = true
+                            getChildAt(0)?.visibility = View.VISIBLE
+
+                            onCardFront?.invoke()
+                        }
+                    }
+                }
+            }
+        }
+
+        val translationXFromValue = if (isZoomIn) 0f else (getCard16Layout().getCenterX() - getCenterX()) / 2f
+        val translationXToValue = if (isZoomIn) (getCard16Layout().getCenterX() - getCenterX()) / 2f else 0f
+        val translationXObjectAnimator = ObjectAnimator.ofFloat(this, "translationX", translationXFromValue,
+                translationXToValue)
+
+        val translationYFromValue = if (isZoomIn) 0f else (getCard16Layout().getCenterY() - getCenterY()) / 2f
+        val translationYToValue = if (isZoomIn) (getCard16Layout().getCenterY() - getCenterY()) / 2f else 0f
+        val translationYObjectAnimator = ObjectAnimator.ofFloat(this, "translationY", translationYFromValue,
+                translationYToValue)
+
+        val translationZFromValue = if (isZoomIn) 0f else 1f
+        val translationZToValue = if (isZoomIn) 1f else 0f
+        val translationZObjectAnimator = ObjectAnimator.ofFloat(this, "translationZ", translationZFromValue,
+                translationZToValue)
+
+        val cardScale = getCard16Layout()?.cardScale ?: 1f
+        val scaleFromValue = if (isZoomIn) 1f else (cardScale - 1f) / 2f + 1f
+        val scaleToValue = if (isZoomIn) (cardScale - 1f) / 2f + 1f else 1f
+        val scaleXObjectAnimator = ObjectAnimator.ofFloat(this, "scaleX", scaleFromValue, scaleToValue)
+
+        val scaleYObjectAnimator = ObjectAnimator.ofFloat(this, "scaleY", scaleFromValue, scaleToValue)
+
+        // TODO: elevation.
+
+        val rotationXYTranslationScaleAnimatorSet = AnimatorSet()
+        rotationXYTranslationScaleAnimatorSet.playTogether(rotationXYObjectAnimator, translationXObjectAnimator,
+                translationYObjectAnimator, translationZObjectAnimator, scaleXObjectAnimator, scaleYObjectAnimator)
+        rotationXYTranslationScaleAnimatorSet.duration = rotationXYDuration
+        rotationXYTranslationScaleAnimatorSet.interpolator =
+                if (isZoomIn) AccelerateInterpolator() else DecelerateInterpolator()
+
+        val animatorSet = AnimatorSet()
+        if (isZoomIn)
+            animatorSet.playSequentially(elevationObjectAnimator, rotationXYTranslationScaleAnimatorSet)
+        else
+            animatorSet.playSequentially(rotationXYTranslationScaleAnimatorSet, elevationObjectAnimator)
+        animatorSet.startDelay = startDelay
+        animatorSet.addListener(object : AnimatorListenerAdapter() {
+            override fun onAnimationStart(animation: Animator?) {
+                super.onAnimationStart(animation)
+
+                rotationXYObjectAnimator.addUpdateListener(rotationXYAnimatorUpdateListener)
+
+                getCard16Layout()?.setAllCardsClickable(false)
+
+                visibility = View.VISIBLE
+
+                elevation = elevationFromValue
+                if (isHorizontal) rotationY = rotationXYFromValue else rotationX = rotationXYFromValue
+                translationX = translationXFromValue
+                translationY = translationYFromValue
+                translationZ = translationZFromValue
+                scaleX = scaleFromValue
+                scaleY = scaleFromValue
+
+                onStart?.invoke()
+            }
+
+            override fun onAnimationEnd(animation: Animator?) {
+                super.onAnimationEnd(animation)
+
+                animatorSet.removeListener(this)
+
+                rotationXYObjectAnimator.removeUpdateListener(rotationXYAnimatorUpdateListener)
+
+                getCard16Layout()?.setAllCardsClickable(true)
+
+                visibility = if (isZoomIn) View.GONE else View.VISIBLE
+
+                if (isZoomIn) {
+                    getCard16Layout()?.getBigCardLayout()?.animZoom(
+                            cardLayout = this@CardLayout,
+                            isZoomIn = isZoomIn,
+                            elevationDuration = elevationDuration,
+                            isHorizontal = isHorizontal,
+                            isClockwise = isClockwise,
+                            is180 = is180,
+                            rotationXYDuration = rotationXYDuration,
+                            startDelay = startDelay)
+                }
 
                 onEnd?.invoke()
             }
