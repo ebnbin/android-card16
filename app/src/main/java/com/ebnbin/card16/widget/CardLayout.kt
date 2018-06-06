@@ -28,14 +28,24 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
 
     init {
         setOnClickListener {
-            animZoom(
-                    isZoomIn = true,
-                    elevationDuration = 50L,
-                    isHorizontal = false,
-                    isClockwise = false,
-                    is180 = true,
-                    rotationXYDuration = 200L,
-                    startDelay = 0L)
+            if (row % 2 == column % 2) {
+                animZoom(
+                        isZoomIn = true,
+                        elevationDuration = 50L,
+                        isHorizontal = false,
+                        isClockwise = false,
+                        is180 = true,
+                        rotationXYDuration = 200L,
+                        startDelay = 0L)
+            } else {
+                animCut(
+                        elevationDuration = 50L,
+                        isHorizontal = true,
+                        isClockwise = false,
+                        is180 = true,
+                        rotationXYDuration = 400L,
+                        startDelay = 0L)
+            }
         }
     }
 
@@ -261,7 +271,6 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
             isClockwise: Boolean,
             is180: Boolean,
             rotationXYDuration: Long,
-            isFromSmallToBig: Boolean?,
             startDelay: Long,
             onStart: (() -> Unit)? = null,
             onEnd: (() -> Unit)? = null,
@@ -328,90 +337,12 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
         val rotationXYAnimatorSet = AnimatorSet()
         rotationXYAnimatorSet.playSequentially(rotationXYOutObjectAnimator, rotationXYInObjectAnimator)
 
-        var translationXFromValue: Float? = null
-        var translationYFromValue: Float? = null
-        var translationZFromValue: Float? = null
-        var translationXObjectAnimator: ObjectAnimator? = null
-        var translationYObjectAnimator: ObjectAnimator? = null
-        var translationZObjectAnimator: ObjectAnimator? = null
-        var scaleFromValue: Float? = null
-        var scaleXObjectAnimator: ObjectAnimator? = null
-        var scaleYObjectAnimator: ObjectAnimator? = null
-        if (isFromSmallToBig != null) {
-            val translationXToValue: Float
-            val translationYToValue: Float
-            val translationZToValue: Float
-            val scaleToValue: Float
-            if (isFromSmallToBig) {
-                translationXFromValue = 0f
-                translationYFromValue = 0f
-                translationZFromValue = 0f
-                translationXToValue = getCard16Layout().getCenterX() - getCenterX()
-                translationYToValue = getCard16Layout().getCenterY() - getCenterY()
-                translationZToValue = 1f
-                scaleFromValue = 1f
-                scaleToValue = getCard16Layout()?.cardScale ?: 1f
-            } else {
-                translationXFromValue = getCard16Layout().getCenterX() - getCenterX()
-                translationYFromValue = getCard16Layout().getCenterY() - getCenterY()
-                translationZFromValue = 1f
-                translationXToValue = 0f
-                translationYToValue = 0f
-                translationZToValue = 0f
-                scaleFromValue = getCard16Layout()?.cardScale ?: 1f
-                scaleToValue = 1f
-            }
-            translationXObjectAnimator = ObjectAnimator.ofFloat(this, "translationX", translationXFromValue,
-                    translationXToValue)
-            translationXObjectAnimator?.duration = rotationXYDuration
-            translationXObjectAnimator?.interpolator = AccelerateDecelerateInterpolator()
-            translationYObjectAnimator = ObjectAnimator.ofFloat(this, "translationY", translationYFromValue,
-                    translationYToValue)
-            translationYObjectAnimator?.duration = rotationXYDuration
-            translationYObjectAnimator?.interpolator = AccelerateDecelerateInterpolator()
-            translationZObjectAnimator = ObjectAnimator.ofFloat(this, "translationZ", translationZFromValue,
-                    translationZToValue)
-            translationZObjectAnimator?.duration = rotationXYDuration
-            translationZObjectAnimator?.interpolator = AccelerateDecelerateInterpolator()
-            scaleXObjectAnimator = ObjectAnimator.ofFloat(this, "scaleX", scaleFromValue, scaleToValue)
-            scaleXObjectAnimator?.duration = rotationXYDuration
-            scaleXObjectAnimator?.interpolator = AccelerateDecelerateInterpolator()
-            scaleYObjectAnimator = ObjectAnimator.ofFloat(this, "scaleY", scaleFromValue, scaleToValue)
-            scaleYObjectAnimator?.duration = rotationXYDuration
-            scaleYObjectAnimator?.interpolator = AccelerateDecelerateInterpolator()
-        }
-
-        val rotationXYTranslationScaleAnimatorSet = AnimatorSet()
-        var rotationXYTranslationScaleAnimatorListener: Animator.AnimatorListener? = null
-        if (isFromSmallToBig == null) {
-            rotationXYTranslationScaleAnimatorSet.playTogether(rotationXYAnimatorSet)
-        } else {
-            rotationXYTranslationScaleAnimatorSet.playTogether(rotationXYAnimatorSet, translationXObjectAnimator,
-                    translationYObjectAnimator, translationZObjectAnimator, scaleXObjectAnimator, scaleYObjectAnimator)
-            rotationXYTranslationScaleAnimatorListener = object : AnimatorListenerAdapter() {
-                override fun onAnimationStart(animation: Animator?) {
-                    super.onAnimationStart(animation)
-
-                    if (isFromSmallToBig) return
-                    getCard16Layout()?.setOtherCardsVisibility(row, column, View.VISIBLE)
-                }
-
-                override fun onAnimationEnd(animation: Animator?) {
-                    super.onAnimationEnd(animation)
-
-                    if (!isFromSmallToBig) return
-                    getCard16Layout()?.setOtherCardsVisibility(row, column, View.GONE)
-                }
-            }
-        }
-
         val elevationOutObjectAnimator = ObjectAnimator.ofFloat(this, "elevation", MAX_ELEVATION, DEF_ELEVATION)
         elevationOutObjectAnimator.duration = elevationDuration
         elevationOutObjectAnimator.interpolator = AccelerateDecelerateInterpolator()
 
         val animatorSet = AnimatorSet()
-        animatorSet.playSequentially(elevationInObjectAnimator, rotationXYTranslationScaleAnimatorSet,
-                elevationOutObjectAnimator)
+        animatorSet.playSequentially(elevationInObjectAnimator, rotationXYAnimatorSet, elevationOutObjectAnimator)
         animatorSet.startDelay = startDelay
         animatorSet.addListener(object : AnimatorListenerAdapter() {
             override fun onAnimationStart(animation: Animator?) {
@@ -420,9 +351,6 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
                 rotationXYOutObjectAnimator.addListener(rotationXYOutAnimatorListener)
                 rotationXYOutObjectAnimator.addUpdateListener(rotationXYAnimatorUpdateListener)
                 rotationXYInObjectAnimator.addUpdateListener(rotationXYAnimatorUpdateListener)
-                if (rotationXYTranslationScaleAnimatorListener != null) {
-                    rotationXYTranslationScaleAnimatorSet.addListener(rotationXYTranslationScaleAnimatorListener)
-                }
 
                 getCard16Layout()?.setAllCardsClickable(false)
 
@@ -430,19 +358,6 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
 
                 elevation = elevationInFromValue
                 if (isHorizontal) rotationY = rotationXYOutFromValue else rotationX = rotationXYOutFromValue
-                if (translationXFromValue != null) {
-                    translationX = translationXFromValue
-                }
-                if (translationYFromValue != null) {
-                    translationY = translationYFromValue
-                }
-                if (translationZFromValue != null) {
-                    translationZ = translationZFromValue
-                }
-                if (scaleFromValue != null) {
-                    scaleX = scaleFromValue
-                    scaleY = scaleFromValue
-                }
 
                 onStart?.invoke()
             }
@@ -455,9 +370,6 @@ class CardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet
                 rotationXYOutObjectAnimator.removeListener(rotationXYOutAnimatorListener)
                 rotationXYOutObjectAnimator.removeUpdateListener(rotationXYAnimatorUpdateListener)
                 rotationXYInObjectAnimator.removeUpdateListener(rotationXYAnimatorUpdateListener)
-                if (rotationXYTranslationScaleAnimatorListener != null) {
-                    rotationXYTranslationScaleAnimatorSet.removeListener(rotationXYTranslationScaleAnimatorListener)
-                }
 
                 getCard16Layout()?.setAllCardsClickable(true)
 
