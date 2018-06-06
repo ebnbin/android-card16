@@ -6,7 +6,6 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.content.Context
-import android.support.v7.widget.CardView
 import android.util.AttributeSet
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
@@ -20,7 +19,7 @@ import com.ebnbin.eb.util.sp
  * 大卡片布局.
  */
 class BigCardLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
-        CardView(context, attrs, defStyleAttr) {
+        BaseCardLayout(context, attrs, defStyleAttr) {
     init {
         visibility = View.GONE
         elevation = DEF_ELEVATION
