@@ -17,7 +17,7 @@ import com.ebnbin.eb.util.sp
 /**
  * 大卡片.
  */
-class BigCard(context: Context) : BaseCardLayout(context) {
+class BigCard(context: Context) : BaseCard(context) {
     init {
         visibility = View.GONE
         elevation = DEF_ELEVATION
@@ -89,17 +89,15 @@ class BigCard(context: Context) : BaseCardLayout(context) {
         }
 
         // TODO: Card index 有效性.
-        val cardCenterX = getCard16Layout()?.cardCenterXs?.get(card.row)?.get(card.column) ?: 0
-        val bigCardCenterX = getCard16Layout()?.bigCardCenterX ?: 0
-        val offsetX = (cardCenterX - bigCardCenterX) / 2f
+        val cardCenterX = card16Layout.cardCenterXs[card.row][card.column]
+        val offsetX = (cardCenterX - card16Layout.bigCardCenterX) / 2f
         val translationXFromValue = if (isZoomIn) offsetX else 0f
         val translationXToValue = if (isZoomIn) 0f else offsetX
         val translationXObjectAnimator = ObjectAnimator.ofFloat(this, "translationX", translationXFromValue,
                 translationXToValue)
 
-        val cardCenterY = getCard16Layout()?.cardCenterYs?.get(card.row)?.get(card.column) ?: 0
-        val bigCardCenterY = getCard16Layout()?.bigCardCenterY ?: 0
-        val offsetY = (cardCenterY - bigCardCenterY) / 2f
+        val cardCenterY = card16Layout.cardCenterYs[card.row][card.column]
+        val offsetY = (cardCenterY - card16Layout.bigCardCenterY) / 2f
         val translationYFromValue = if (isZoomIn) offsetY else 0f
         val translationYToValue = if (isZoomIn) 0f else offsetY
         val translationYObjectAnimator = ObjectAnimator.ofFloat(this, "translationY", translationYFromValue,
@@ -110,9 +108,8 @@ class BigCard(context: Context) : BaseCardLayout(context) {
         val translationZObjectAnimator = ObjectAnimator.ofFloat(this, "translationZ", translationZFromValue,
                 translationZToValue)
 
-        val cardScaleInverse = getCard16Layout()?.scaleOut ?: 1f
-        val scaleFromValue = if (isZoomIn) (1f - cardScaleInverse) / 2f + cardScaleInverse else 1f
-        val scaleToValue = if (isZoomIn) 1f else (1f - cardScaleInverse) / 2f + cardScaleInverse
+        val scaleFromValue = if (isZoomIn) (1f - card16Layout.scaleOut) / 2f + card16Layout.scaleOut else 1f
+        val scaleToValue = if (isZoomIn) 1f else (1f - card16Layout.scaleOut) / 2f + card16Layout.scaleOut
         val scaleXObjectAnimator = ObjectAnimator.ofFloat(this, "scaleX", scaleFromValue, scaleToValue)
 
         val scaleYObjectAnimator = ObjectAnimator.ofFloat(this, "scaleY", scaleFromValue, scaleToValue)
@@ -130,14 +127,14 @@ class BigCard(context: Context) : BaseCardLayout(context) {
                 super.onAnimationStart(animation)
 
                 if (isZoomIn) return
-                getCard16Layout()?.setAllCardsVisibility(View.VISIBLE, card.row, card.column)
+                card16Layout.setAllCardsVisibility(View.VISIBLE, card.row, card.column)
             }
 
             override fun onAnimationEnd(animation: Animator?) {
                 super.onAnimationEnd(animation)
 
                 if (!isZoomIn) return
-                getCard16Layout()?.setAllCardsVisibility(View.GONE, card.row, card.column)
+                card16Layout.setAllCardsVisibility(View.GONE, card.row, card.column)
             }
         }
 
@@ -154,7 +151,7 @@ class BigCard(context: Context) : BaseCardLayout(context) {
                 rotationXYObjectAnimator.addUpdateListener(rotationXYAnimatorUpdateListener)
                 rotationXYTranslationScaleAnimatorSet.addListener(rotationXYTranslationScaleAnimatorListener)
 
-                getCard16Layout()?.setAllCardsClickable(false)
+                card16Layout.setAllCardsClickable(false)
 
                 visibility = View.VISIBLE
 
@@ -177,7 +174,7 @@ class BigCard(context: Context) : BaseCardLayout(context) {
                 rotationXYObjectAnimator.removeUpdateListener(rotationXYAnimatorUpdateListener)
                 rotationXYTranslationScaleAnimatorSet.removeListener(rotationXYTranslationScaleAnimatorListener)
 
-                getCard16Layout()?.setAllCardsClickable(true)
+                card16Layout.setAllCardsClickable(true)
 
                 visibility = if (isZoomIn) View.VISIBLE else View.GONE
 
@@ -210,8 +207,6 @@ class BigCard(context: Context) : BaseCardLayout(context) {
         })
         animatorSet.start()
     }
-
-    private fun getCard16Layout() = parent as? Card16Layout
 
     companion object {
         /**

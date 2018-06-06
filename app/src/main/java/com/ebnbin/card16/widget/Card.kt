@@ -18,7 +18,7 @@ import com.ebnbin.eb.view.getCenterY
 /**
  * 卡片.
  */
-class Card(context: Context) : BaseCardLayout(context) {
+class Card(context: Context) : BaseCard(context) {
     private val button = Button(this.context).apply {
         this@Card.addView(this, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
     }
@@ -183,7 +183,7 @@ class Card(context: Context) : BaseCardLayout(context) {
 
                 rotationXYObjectAnimator.addUpdateListener(rotationXYAnimatorUpdateListener)
 
-                getCard16Layout()?.setAllCardsClickable(false)
+                card16Layout.setAllCardsClickable(false)
 
                 visibility = View.VISIBLE
 
@@ -201,7 +201,7 @@ class Card(context: Context) : BaseCardLayout(context) {
 
                 rotationXYObjectAnimator.removeUpdateListener(rotationXYAnimatorUpdateListener)
 
-                getCard16Layout()?.setAllCardsClickable(true)
+                card16Layout.setAllCardsClickable(true)
 
                 visibility = if (isIn) View.VISIBLE else View.GONE
 
@@ -349,7 +349,7 @@ class Card(context: Context) : BaseCardLayout(context) {
                 rotationXYOutObjectAnimator.addUpdateListener(rotationXYAnimatorUpdateListener)
                 rotationXYInObjectAnimator.addUpdateListener(rotationXYAnimatorUpdateListener)
 
-                getCard16Layout()?.setAllCardsClickable(false)
+                card16Layout.setAllCardsClickable(false)
 
                 visibility = View.VISIBLE
 
@@ -368,7 +368,7 @@ class Card(context: Context) : BaseCardLayout(context) {
                 rotationXYOutObjectAnimator.removeUpdateListener(rotationXYAnimatorUpdateListener)
                 rotationXYInObjectAnimator.removeUpdateListener(rotationXYAnimatorUpdateListener)
 
-                getCard16Layout()?.setAllCardsClickable(true)
+                card16Layout.setAllCardsClickable(true)
 
                 onEnd?.invoke()
             }
@@ -432,13 +432,13 @@ class Card(context: Context) : BaseCardLayout(context) {
             }
         }
 
-        val translationXFromValue = if (isZoomIn) 0f else (getCard16Layout().getCenterX() - getCenterX()) / 2f
-        val translationXToValue = if (isZoomIn) (getCard16Layout().getCenterX() - getCenterX()) / 2f else 0f
+        val translationXFromValue = if (isZoomIn) 0f else (card16Layout.getCenterX() - getCenterX()) / 2f
+        val translationXToValue = if (isZoomIn) (card16Layout.getCenterX() - getCenterX()) / 2f else 0f
         val translationXObjectAnimator = ObjectAnimator.ofFloat(this, "translationX", translationXFromValue,
                 translationXToValue)
 
-        val translationYFromValue = if (isZoomIn) 0f else (getCard16Layout().getCenterY() - getCenterY()) / 2f
-        val translationYToValue = if (isZoomIn) (getCard16Layout().getCenterY() - getCenterY()) / 2f else 0f
+        val translationYFromValue = if (isZoomIn) 0f else (card16Layout.getCenterY() - getCenterY()) / 2f
+        val translationYToValue = if (isZoomIn) (card16Layout.getCenterY() - getCenterY()) / 2f else 0f
         val translationYObjectAnimator = ObjectAnimator.ofFloat(this, "translationY", translationYFromValue,
                 translationYToValue)
 
@@ -447,9 +447,8 @@ class Card(context: Context) : BaseCardLayout(context) {
         val translationZObjectAnimator = ObjectAnimator.ofFloat(this, "translationZ", translationZFromValue,
                 translationZToValue)
 
-        val cardScale = getCard16Layout()?.scaleIn ?: 1f
-        val scaleFromValue = if (isZoomIn) 1f else (cardScale - 1f) / 2f + 1f
-        val scaleToValue = if (isZoomIn) (cardScale - 1f) / 2f + 1f else 1f
+        val scaleFromValue = if (isZoomIn) 1f else (card16Layout.scaleIn - 1f) / 2f + 1f
+        val scaleToValue = if (isZoomIn) (card16Layout.scaleIn - 1f) / 2f + 1f else 1f
         val scaleXObjectAnimator = ObjectAnimator.ofFloat(this, "scaleX", scaleFromValue, scaleToValue)
 
         val scaleYObjectAnimator = ObjectAnimator.ofFloat(this, "scaleY", scaleFromValue, scaleToValue)
@@ -475,7 +474,7 @@ class Card(context: Context) : BaseCardLayout(context) {
 
                 rotationXYObjectAnimator.addUpdateListener(rotationXYAnimatorUpdateListener)
 
-                getCard16Layout()?.setAllCardsClickable(false)
+                card16Layout.setAllCardsClickable(false)
 
                 visibility = View.VISIBLE
 
@@ -497,12 +496,12 @@ class Card(context: Context) : BaseCardLayout(context) {
 
                 rotationXYObjectAnimator.removeUpdateListener(rotationXYAnimatorUpdateListener)
 
-                getCard16Layout()?.setAllCardsClickable(true)
+                card16Layout.setAllCardsClickable(true)
 
                 visibility = if (isZoomIn) View.GONE else View.VISIBLE
 
                 if (isZoomIn) {
-                    getCard16Layout()?.getBigCard()?.animZoom(
+                    card16Layout.getBigCard().animZoom(
                             card = this@Card,
                             isZoomIn = isZoomIn,
                             elevationDuration = elevationDuration,
@@ -518,8 +517,6 @@ class Card(context: Context) : BaseCardLayout(context) {
         })
         animatorSet.start()
     }
-
-    private fun getCard16Layout() = parent as? Card16Layout
 
     companion object {
         /**
