@@ -89,7 +89,7 @@ class BigCard(context: Context) : BaseCardLayout(context) {
         }
 
         // TODO: Card index 有效性.
-        val cardCenterX = getCard16Layout()?.getCardCenterX(card.row, card.column) ?: 0
+        val cardCenterX = getCard16Layout()?.cardCenterXs?.get(card.row)?.get(card.column) ?: 0
         val bigCardCenterX = getCard16Layout()?.bigCardCenterX ?: 0
         val offsetX = (cardCenterX - bigCardCenterX) / 2f
         val translationXFromValue = if (isZoomIn) offsetX else 0f
@@ -97,7 +97,7 @@ class BigCard(context: Context) : BaseCardLayout(context) {
         val translationXObjectAnimator = ObjectAnimator.ofFloat(this, "translationX", translationXFromValue,
                 translationXToValue)
 
-        val cardCenterY = getCard16Layout()?.getCardCenterY(card.row, card.column) ?: 0
+        val cardCenterY = getCard16Layout()?.cardCenterYs?.get(card.row)?.get(card.column) ?: 0
         val bigCardCenterY = getCard16Layout()?.bigCardCenterY ?: 0
         val offsetY = (cardCenterY - bigCardCenterY) / 2f
         val translationYFromValue = if (isZoomIn) offsetY else 0f

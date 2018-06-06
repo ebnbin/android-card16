@@ -3,6 +3,7 @@ package com.ebnbin.card16.widget
 import android.content.Context
 import android.util.AttributeSet
 import android.view.ViewGroup
+import com.ebnbin.eb.util.EBRuntimeException
 import com.ebnbin.eb.util.dpInt
 import kotlin.math.min
 
@@ -99,32 +100,28 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
     /**
      * [Card] 水平方向中心位置.
      */
-    private val cardCenterXs = Array(GRID) { Array(GRID) { 0 } }
+    val cardCenterXs = Array(GRID) { Array(GRID) { 0 } }
     /**
      * [Card] 垂直方向中心位置.
      */
-    private val cardCenterYs = Array(GRID) { Array(GRID) { 0 } }
+    val cardCenterYs = Array(GRID) { Array(GRID) { 0 } }
 
     /**
      * [BigCard] 左位置.
      */
-    var bigCardLeft = 0
-        private set
+    private var bigCardLeft = 0
     /**
      * [BigCard] 上位置.
      */
-    var bigCardTop = 0
-        private set
+    private var bigCardTop = 0
     /**
      * [BigCard] 右位置.
      */
-    var bigCardRight = 0
-        private set
+    private var bigCardRight = 0
     /**
      * [BigCard] 下位置.
      */
-    var bigCardBottom = 0
-        private set
+    private var bigCardBottom = 0
     /**
      * [BigCard] 水平方向中心位置.
      */
@@ -230,39 +227,10 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
     }
 
     /**
-     * 返回行列是否有效.
+     * 返回行列是否有效. 要么行列都为空, 要么行列都在范围内.
      */
-    private fun isIndexValid(row: Int, column: Int) = row in 0 until GRID && column in 0 until GRID
-
-    /**
-     * 根据行列返回 [Card] 左位置. 如果行列无效则返回 0.
-     */
-    fun getCardLeft(row: Int, column: Int) = cardLefts.getOrNull(row)?.getOrNull(column) ?: 0
-
-    /**
-     * 根据行列返回 [Card] 上位置. 如果行列无效则返回 0.
-     */
-    fun getCardTop(row: Int, column: Int) = cardTops.getOrNull(row)?.getOrNull(column) ?: 0
-
-    /**
-     * 根据行列返回 [Card] 右位置. 如果行列无效则返回 0.
-     */
-    fun getCardRight(row: Int, column: Int) = cardRights.getOrNull(row)?.getOrNull(column) ?: 0
-
-    /**
-     * 根据行列返回 [Card] 下位置. 如果行列无效则返回 0.
-     */
-    fun getCardBottom(row: Int, column: Int) = cardBottoms.getOrNull(row)?.getOrNull(column) ?: 0
-
-    /**
-     * 根据行列返回 [Card] 水平方向中心位置. 如果行列无效则返回 0.
-     */
-    fun getCardCenterX(row: Int, column: Int) = cardCenterXs.getOrNull(row)?.getOrNull(column) ?: 0
-
-    /**
-     * 根据行列返回 [Card] 垂直方向中心位置. 如果行列无效则返回 0.
-     */
-    fun getCardCenterY(row: Int, column: Int) = cardCenterYs.getOrNull(row)?.getOrNull(column) ?: 0
+    private fun isIndexValid(row: Int?, column: Int?) = row == null && column == null ||
+            row in 0 until GRID && column in 0 until GRID
 
     /**
      * 设置全部 [Card] 的可见性.
@@ -272,12 +240,10 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
      * @param columnExcept 除外的 [Card] 的列.
      */
     fun setAllCardsVisibility(visibility: Int, rowExcept: Int? = null, columnExcept: Int? = null) {
+        if (!isIndexValid(rowExcept, columnExcept)) throw EBRuntimeException()
         for (index in 0 until childCount) {
             val card = getChildAt(index) as? Card ?: continue
-            if (rowExcept != null &&
-                    columnExcept != null &&
-                    card.row == rowExcept &&
-                    card.column == columnExcept) continue
+            if (card.row == rowExcept && card.column == columnExcept) continue
             card.visibility = visibility
         }
     }
@@ -290,12 +256,10 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
      * @param columnExcept 除外的 [Card] 的列.
      */
     fun setAllCardsClickable(isClickable: Boolean, rowExcept: Int? = null, columnExcept: Int? = null) {
+        if (!isIndexValid(rowExcept, columnExcept)) throw EBRuntimeException()
         for (index in 0 until childCount) {
             val card = getChildAt(index) as? Card ?: continue
-            if (rowExcept != null &&
-                    columnExcept != null &&
-                    card.row == rowExcept &&
-                    card.column == columnExcept) continue
+            if (card.row == rowExcept && card.column == columnExcept) continue
             card.isClickable = isClickable
         }
     }
@@ -303,24 +267,24 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
     /**
      * 根据行列返回 [Card].
      */
-    fun getCard(row: Int, column: Int): Card? {
-        if (!isIndexValid(row, column)) return null
+    fun getCard(row: Int, column: Int): Card {
+        if (!isIndexValid(row, column)) throw EBRuntimeException()
         for (index in 0 until childCount) {
             val child = getChildAt(index)
             if (child is Card && child.row == row && child.column == column) return child
         }
-        return null
+        throw EBRuntimeException()
     }
 
     /**
      * 返回 [BigCard].
      */
-    fun getBigCard(): BigCard? {
+    fun getBigCard(): BigCard {
         for (index in 0 until childCount) {
             val child = getChildAt(index)
             if (child is BigCard) return child
         }
-        return null
+        throw EBRuntimeException()
     }
 
     companion object {
