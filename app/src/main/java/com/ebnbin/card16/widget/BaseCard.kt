@@ -22,7 +22,12 @@ abstract class BaseCard(context: Context) : BaseCardLayout(context) {
     /**
      * 最大高度.
      */
-    protected abstract val maxElevation: Float
+    abstract val maxElevation: Float
+
+    /**
+     * 默认圆角.
+     */
+    abstract val defRadius: Float
 
     /**
      * 卡片出现动画.
@@ -236,6 +241,6 @@ abstract class BaseCard(context: Context) : BaseCardLayout(context) {
         /**
          * 高度动画时长.
          */
-        private const val ELEVATION_DURATION = 50L
+        const val ELEVATION_DURATION = 50L
     }
 }

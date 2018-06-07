@@ -4,16 +4,14 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
 import android.content.Context
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.widget.Button
+import com.ebnbin.card16.widget.BaseCard.Companion.ELEVATION_DURATION
 import com.ebnbin.eb.util.dp
-import com.ebnbin.eb.view.getCenterX
-import com.ebnbin.eb.view.getCenterY
 
 /**
  * 卡片.
@@ -22,6 +20,8 @@ class Card(context: Context) : BaseCard(context) {
     override val defElevation = DEF_ELEVATION_DP.dp
     override val maxElevation = MAX_ELEVATION_DP.dp
 
+    override val defRadius = DEF_RADIUS_DP.dp
+
     private val button = Button(this.context).apply {
         this@Card.addView(this, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
     }
@@ -29,14 +29,11 @@ class Card(context: Context) : BaseCard(context) {
     init {
         setOnClickListener {
             if (row % 2 == column % 2) {
-                animZoom(
-                        isZoomIn = true,
-                        elevationDuration = 50L,
+                animateZoomIn(
                         isHorizontal = false,
                         isClockwise = false,
-                        is180 = true,
-                        rotationXYDuration = 200L,
-                        startDelay = 0L)
+                        hasBack = false,
+                        rotationDuration = 400L)
             } else {
                 animateCut(
                         isHorizontal = true,
@@ -65,146 +62,186 @@ class Card(context: Context) : BaseCard(context) {
         button.text = "$row-$column"
     }
 
-    fun animZoom(
-            isZoomIn: Boolean,
-            elevationDuration: Long,
+    /**
+     * 卡片放大动画.
+     *
+     * 需要调用 [BigCard.animateZoomIn].
+     *
+     * [Card] 负责前半部分的动画, 衔接 [BigCard] 负责后半部分的动画, 完成从小卡片到大卡片的放大动画.
+     *
+     * [Card] 完成前半部分动画后隐藏自己. [BigCard] 高度降低前隐藏其他 [Card].
+     *
+     * 动画时长: 2 * [ELEVATION_DURATION] + [rotationDuration].
+     *
+     * @param isHorizontal 水平方向或垂直方向翻转.
+     *
+     * @param isClockwise 从上往下或从左往右视角, 顺时针或逆时针翻转.
+     *
+     * @param hasBack 卡片翻转时是否有背面 (空白面).
+     *
+     * @param rotationDuration 翻转动画时长 (两部分动画平分).
+     *
+     * @param onCardCut 卡片切换回调.
+     */
+    fun animateZoomIn(
             isHorizontal: Boolean,
             isClockwise: Boolean,
-            is180: Boolean,
-            rotationXYDuration: Long,
-            startDelay: Long,
-            onStart: (() -> Unit)? = null,
-            onEnd: (() -> Unit)? = null,
-            onCardFront: (() -> Unit)? = null,
-            onCardBack: (() -> Unit)? = null) {
-        val elevationFromValue = if (isZoomIn) DEF_ELEVATION_DP.dp else MAX_ELEVATION_DP.dp
-        val elevationToValue = if (isZoomIn) MAX_ELEVATION_DP.dp else DEF_ELEVATION_DP.dp
-        val elevationObjectAnimator = ObjectAnimator.ofFloat(this, "elevation", elevationFromValue, elevationToValue)
-        elevationObjectAnimator.duration = elevationDuration
-        elevationObjectAnimator.interpolator = AccelerateDecelerateInterpolator()
+            hasBack: Boolean,
+            rotationDuration: Long,
+            onCardCut: (() -> Unit)? = null) {
+        AnimatorSet().apply {
+            val elevationInAnimator = ObjectAnimator().apply {
+                propertyName = "elevation"
+                val valueFrom = defElevation
+                val valueTo = maxElevation
+                setFloatValues(valueFrom, valueTo)
+                duration = ELEVATION_DURATION
+                interpolator = AccelerateDecelerateInterpolator()
+            }
+            val rotationAnimatorSet = AnimatorSet().apply {
+                val rotationAnimator = ObjectAnimator().apply {
+                    propertyName = if (isHorizontal) "rotationY" else "rotationX"
+                    val valueFrom = 0f
+                    val valueTo = (if (isClockwise) -1 else 1) * (if (hasBack) 180f else 90f)
+                    setFloatValues(valueFrom, valueTo)
+                    val animatorUpdateListener = CardFrontBackAnimatorUpdateListener(isClockwise)
+                    addUpdateListener(animatorUpdateListener)
+                }
+                val translationXAnimator = ObjectAnimator().apply {
+                    propertyName = "translationX"
+                    val valueFrom = 0f
+                    val valueTo = (card16Layout.bigCardCenterX - card16Layout.cardCenterXs[row][column]) / 2f
+                    setFloatValues(valueFrom, valueTo)
+                }
+                val translationYAnimator = ObjectAnimator().apply {
+                    propertyName = "translationY"
+                    val valueFrom = 0f
+                    val valueTo = (card16Layout.bigCardCenterY - card16Layout.cardCenterYs[row][column]) / 2f
+                    setFloatValues(valueFrom, valueTo)
+                }
+                val scaleXAnimator = ObjectAnimator().apply {
+                    propertyName = "scaleX"
+                    val valueFrom = 1f
+                    val valueTo = (1f + card16Layout.scaleIn) / 2f
+                    setFloatValues(valueFrom, valueTo)
+                }
+                val scaleYAnimator = ObjectAnimator().apply {
+                    propertyName = "scaleY"
+                    val valueFrom = 1f
+                    val valueTo = (1f + card16Layout.scaleIn) / 2f
+                    setFloatValues(valueFrom, valueTo)
+                }
+                val radiusAnimator = ObjectAnimator().apply {
+                    propertyName = "radius"
+                    val valueFrom = defRadius
+                    val valueTo = (defRadius + card16Layout.getBigCard().defRadius) / 2f
+                    setFloatValues(valueFrom, valueTo)
+                }
+                val elevationAnimator = ObjectAnimator().apply {
+                    propertyName = "elevation"
+                    val valueFrom = maxElevation
+                    val valueTo = (maxElevation + card16Layout.getBigCard().maxElevation) / 2f
+                    setFloatValues(valueFrom, valueTo)
+                }
+                playTogether(rotationAnimator, translationXAnimator, translationYAnimator, scaleXAnimator,
+                        scaleYAnimator, radiusAnimator, elevationAnimator)
+                duration = rotationDuration / 2L
+                interpolator = AccelerateInterpolator()
+                val animatorListener = object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator?) {
+                        super.onAnimationEnd(animation)
 
-        val rotationXYPropertyName = if (isHorizontal) "rotationY" else "rotationX"
-        val rotationXYDegrees = if (is180) 90f else 180f
-        val rotationXYFromClockwiseSign = if (isClockwise) 1 else -1
-        val rotationXYFromValue = if (isZoomIn) 0f else rotationXYFromClockwiseSign * rotationXYDegrees
-        val rotationXYToClockwiseSign = -rotationXYFromClockwiseSign
-        val rotationXYToValue = if (isZoomIn) rotationXYToClockwiseSign * rotationXYDegrees else 0f
-        val rotationXYObjectAnimator = ObjectAnimator.ofFloat(this, rotationXYPropertyName, rotationXYFromValue,
-                rotationXYToValue)
-        rotationXYObjectAnimator.duration = rotationXYDuration
-        rotationXYObjectAnimator.interpolator = if (isZoomIn) AccelerateInterpolator() else DecelerateInterpolator()
-        val rotationXYAnimatorUpdateListener = object : ValueAnimator.AnimatorUpdateListener {
-            private var isFront: Boolean? = null
-
-            override fun onAnimationUpdate(animation: ValueAnimator?) {
-                val rotationXY = animation?.animatedValue as Float? ?: return
-                val validRotationXY = (rotationXY % 360f + 360f) % 360f
-                when (validRotationXY) {
-                    0f, 90f, 180f, 270f -> Unit
-                    in 90f..270f -> {
-                        if (isFront != false) {
-                            isFront = false
-                            getChildAt(0)?.visibility = View.GONE
-
-                            onCardBack?.invoke()
-                        }
-                    }
-                    else -> {
-                        if (isFront != true) {
-                            isFront = true
-                            getChildAt(0)?.visibility = View.VISIBLE
-
-                            onCardFront?.invoke()
-                        }
+                        onCardCut?.invoke()
                     }
                 }
+                addListener(animatorListener)
             }
-        }
+            playSequentially(elevationInAnimator, rotationAnimatorSet)
+            val animatorListener = CardAnimatorListener(onEnd = {
+                visibility = View.GONE
 
-        val translationXFromValue = if (isZoomIn) 0f else (card16Layout.getCenterX() - getCenterX()) / 2f
-        val translationXToValue = if (isZoomIn) (card16Layout.getCenterX() - getCenterX()) / 2f else 0f
-        val translationXObjectAnimator = ObjectAnimator.ofFloat(this, "translationX", translationXFromValue,
-                translationXToValue)
+                card16Layout.getBigCard().animateZoomIn(row, column, isHorizontal, isClockwise, hasBack,
+                        rotationDuration)
+            })
+            addListener(animatorListener)
+            setTarget(this@Card)
+        }.start()
+    }
 
-        val translationYFromValue = if (isZoomIn) 0f else (card16Layout.getCenterY() - getCenterY()) / 2f
-        val translationYToValue = if (isZoomIn) (card16Layout.getCenterY() - getCenterY()) / 2f else 0f
-        val translationYObjectAnimator = ObjectAnimator.ofFloat(this, "translationY", translationYFromValue,
-                translationYToValue)
-
-        val translationZFromValue = if (isZoomIn) 0f else 1f
-        val translationZToValue = if (isZoomIn) 1f else 0f
-        val translationZObjectAnimator = ObjectAnimator.ofFloat(this, "translationZ", translationZFromValue,
-                translationZToValue)
-
-        val scaleFromValue = if (isZoomIn) 1f else (card16Layout.scaleIn - 1f) / 2f + 1f
-        val scaleToValue = if (isZoomIn) (card16Layout.scaleIn - 1f) / 2f + 1f else 1f
-        val scaleXObjectAnimator = ObjectAnimator.ofFloat(this, "scaleX", scaleFromValue, scaleToValue)
-
-        val scaleYObjectAnimator = ObjectAnimator.ofFloat(this, "scaleY", scaleFromValue, scaleToValue)
-
-        // TODO: elevation.
-
-        val rotationXYTranslationScaleAnimatorSet = AnimatorSet()
-        rotationXYTranslationScaleAnimatorSet.playTogether(rotationXYObjectAnimator, translationXObjectAnimator,
-                translationYObjectAnimator, translationZObjectAnimator, scaleXObjectAnimator, scaleYObjectAnimator)
-        rotationXYTranslationScaleAnimatorSet.duration = rotationXYDuration
-        rotationXYTranslationScaleAnimatorSet.interpolator =
-                if (isZoomIn) AccelerateInterpolator() else DecelerateInterpolator()
-
-        val animatorSet = AnimatorSet()
-        if (isZoomIn)
-            animatorSet.playSequentially(elevationObjectAnimator, rotationXYTranslationScaleAnimatorSet)
-        else
-            animatorSet.playSequentially(rotationXYTranslationScaleAnimatorSet, elevationObjectAnimator)
-        animatorSet.startDelay = startDelay
-        animatorSet.addListener(object : AnimatorListenerAdapter() {
-            override fun onAnimationStart(animation: Animator?) {
-                super.onAnimationStart(animation)
-
-                rotationXYObjectAnimator.addUpdateListener(rotationXYAnimatorUpdateListener)
-
-                card16Layout.setAllCardsClickable(false)
-
-                visibility = View.VISIBLE
-
-                elevation = elevationFromValue
-                if (isHorizontal) rotationY = rotationXYFromValue else rotationX = rotationXYFromValue
-                translationX = translationXFromValue
-                translationY = translationYFromValue
-                translationZ = translationZFromValue
-                scaleX = scaleFromValue
-                scaleY = scaleFromValue
-
-                onStart?.invoke()
-            }
-
-            override fun onAnimationEnd(animation: Animator?) {
-                super.onAnimationEnd(animation)
-
-                animatorSet.removeListener(this)
-
-                rotationXYObjectAnimator.removeUpdateListener(rotationXYAnimatorUpdateListener)
-
-                card16Layout.setAllCardsClickable(true)
-
-                visibility = if (isZoomIn) View.GONE else View.VISIBLE
-
-                if (isZoomIn) {
-                    card16Layout.getBigCard().animZoom(
-                            card = this@Card,
-                            isZoomIn = isZoomIn,
-                            elevationDuration = elevationDuration,
-                            isHorizontal = isHorizontal,
-                            isClockwise = isClockwise,
-                            is180 = is180,
-                            rotationXYDuration = rotationXYDuration,
-                            startDelay = startDelay)
+    /**
+     * 只能由 [BigCard.animateZoomOut] 调用.
+     */
+    fun animateZoomOut(
+            isHorizontal: Boolean,
+            isClockwise: Boolean,
+            hasBack: Boolean,
+            rotationDuration: Long) {
+        AnimatorSet().apply {
+            val rotationAnimatorSet = AnimatorSet().apply {
+                val rotationAnimator = ObjectAnimator().apply {
+                    propertyName = if (isHorizontal) "rotationY" else "rotationX"
+                    val valueFrom = (if (isClockwise) 1 else -1) * (if (hasBack) 180f else 90f)
+                    val valueTo = 0f
+                    setFloatValues(valueFrom, valueTo)
+                    val animatorUpdateListener = CardFrontBackAnimatorUpdateListener(isClockwise)
+                    addUpdateListener(animatorUpdateListener)
                 }
-
-                onEnd?.invoke()
+                val translationXAnimator = ObjectAnimator().apply {
+                    propertyName = "translationX"
+                    val valueFrom = (card16Layout.bigCardCenterX - card16Layout.cardCenterXs[row][column]) / 2f
+                    val valueTo = 0f
+                    setFloatValues(valueFrom, valueTo)
+                }
+                val translationYAnimator = ObjectAnimator().apply {
+                    propertyName = "translationY"
+                    val valueFrom = (card16Layout.bigCardCenterY - card16Layout.cardCenterYs[row][column]) / 2f
+                    val valueTo = 0f
+                    setFloatValues(valueFrom, valueTo)
+                }
+                val scaleXAnimator = ObjectAnimator().apply {
+                    propertyName = "scaleX"
+                    val valueFrom = (card16Layout.scaleIn + 1f) / 2f
+                    val valueTo = 1f
+                    setFloatValues(valueFrom, valueTo)
+                }
+                val scaleYAnimator = ObjectAnimator().apply {
+                    propertyName = "scaleY"
+                    val valueFrom = (card16Layout.scaleIn + 1f) / 2f
+                    val valueTo = 1f
+                    setFloatValues(valueFrom, valueTo)
+                }
+                val radiusAnimator = ObjectAnimator().apply {
+                    propertyName = "radius"
+                    val valueFrom = (card16Layout.getBigCard().defRadius + defRadius) / 2f
+                    val valueTo = defRadius
+                    setFloatValues(valueFrom, valueTo)
+                }
+                val elevationAnimator = ObjectAnimator().apply {
+                    propertyName = "elevation"
+                    val valueFrom = (card16Layout.getBigCard().maxElevation + maxElevation) / 2f
+                    val valueTo = maxElevation
+                    setFloatValues(valueFrom, valueTo)
+                }
+                playTogether(rotationAnimator, translationXAnimator, translationYAnimator, scaleXAnimator,
+                        scaleYAnimator, radiusAnimator, elevationAnimator)
+                duration = rotationDuration - rotationDuration / 2L
+                interpolator = DecelerateInterpolator()
             }
-        })
-        animatorSet.start()
+            val elevationOutAnimator = ObjectAnimator().apply {
+                propertyName = "elevation"
+                val valueFrom = maxElevation
+                val valueTo = defElevation
+                setFloatValues(valueFrom, valueTo)
+                duration = ELEVATION_DURATION
+                interpolator = AccelerateDecelerateInterpolator()
+            }
+            playSequentially(rotationAnimatorSet, elevationOutAnimator)
+            val animatorListener = CardAnimatorListener(onEnd = {
+                // TODO
+            })
+            addListener(animatorListener)
+            setTarget(this@Card)
+        }.start()
     }
 
     companion object {
@@ -216,5 +253,10 @@ class Card(context: Context) : BaseCard(context) {
          * 最大高度 dp.
          */
         private const val MAX_ELEVATION_DP = 8f
+
+        /**
+         * 默认圆角 dp.
+         */
+        private const val DEF_RADIUS_DP = 2f
     }
 }
