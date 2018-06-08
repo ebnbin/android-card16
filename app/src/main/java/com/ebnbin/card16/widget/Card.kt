@@ -135,13 +135,13 @@ class Card(context: Context) : BaseCard(context) {
                 val radiusAnimator = ObjectAnimator().apply {
                     propertyName = "radius"
                     val valueFrom = defRadius
-                    val valueTo = (defRadius + card16Layout.getBigCard().defRadius) / 2f
+                    val valueTo = (defRadius + card16Layout.bigCard.defRadius) / 2f
                     setFloatValues(valueFrom, valueTo)
                 }
                 val elevationAnimator = ObjectAnimator().apply {
                     propertyName = "elevation"
                     val valueFrom = maxElevation
-                    val valueTo = (maxElevation + card16Layout.getBigCard().maxElevation) / 2f
+                    val valueTo = (maxElevation + card16Layout.bigCard.maxElevation) / 2f
                     setFloatValues(valueFrom, valueTo)
                 }
                 playTogether(rotationAnimator, translationXAnimator, translationYAnimator, scaleXAnimator,
@@ -161,8 +161,7 @@ class Card(context: Context) : BaseCard(context) {
             val animatorListener = CardAnimatorListener(onEnd = {
                 visibility = View.GONE
 
-                card16Layout.getBigCard().animateZoomIn(row, column, isHorizontal, isClockwise, hasBack,
-                        rotationDuration)
+                card16Layout.bigCard.animateZoomIn(row, column, isHorizontal, isClockwise, hasBack, rotationDuration)
             })
             addListener(animatorListener)
             setTarget(this@Card)
@@ -213,13 +212,13 @@ class Card(context: Context) : BaseCard(context) {
                 }
                 val radiusAnimator = ObjectAnimator().apply {
                     propertyName = "radius"
-                    val valueFrom = (card16Layout.getBigCard().defRadius + defRadius) / 2f
+                    val valueFrom = (card16Layout.bigCard.defRadius + defRadius) / 2f
                     val valueTo = defRadius
                     setFloatValues(valueFrom, valueTo)
                 }
                 val elevationAnimator = ObjectAnimator().apply {
                     propertyName = "elevation"
-                    val valueFrom = (card16Layout.getBigCard().maxElevation + maxElevation) / 2f
+                    val valueFrom = (card16Layout.bigCard.maxElevation + maxElevation) / 2f
                     val valueTo = maxElevation
                     setFloatValues(valueFrom, valueTo)
                 }

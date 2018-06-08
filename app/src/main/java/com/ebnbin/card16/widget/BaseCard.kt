@@ -216,16 +216,16 @@ abstract class BaseCard(context: Context) : BaseCardLayout(context) {
             super.onStart(animator)
 
             // TODO
-            card16Layout.setAllCardsClickable(false)
-            card16Layout.getBigCard().isClickable = false
+            card16Layout.cards { it.isClickable = false }
+            card16Layout.bigCard.isClickable = false
         }
 
         override fun onEnd(animator: Animator) {
             super.onEnd(animator)
 
             // TODO
-            card16Layout.setAllCardsClickable(true)
-            card16Layout.getBigCard().isClickable = true
+            card16Layout.cards { it.isClickable = true }
+            card16Layout.bigCard.isClickable = true
         }
     }
 

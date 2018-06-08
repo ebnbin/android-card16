@@ -3,7 +3,6 @@ package com.ebnbin.card16.widget
 import android.content.Context
 import android.util.AttributeSet
 import android.view.ViewGroup
-import com.ebnbin.eb.util.EBRuntimeException
 import com.ebnbin.eb.util.dpInt
 import kotlin.math.min
 
@@ -16,19 +15,23 @@ import kotlin.math.min
  */
 class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0,
         defStyleRes: Int = 0) : ViewGroup(context, attrs, defStyleAttr, defStyleRes) {
-    init {
-        // 添加 16 个 Card.
-        for (row in 0 until GRID) {
-            for (column in 0 until GRID) {
-                val card = Card(this.context)
-                addView(card)
-                card.setIndex(row, column)
+    /**
+     * 16 张卡片.
+     */
+    val cards = Array(GRID) { row ->
+        Array(GRID) { column ->
+            Card(this.context).apply {
+                this@Card16Layout.addView(this)
+                setIndex(row, column)
             }
         }
+    }
 
-        // 添加 BigCard.
-        val bigCard = BigCard(this.context)
-        addView(bigCard)
+    /**
+     * 大卡片.
+     */
+    val bigCard = BigCard(this.context).apply {
+        this@Card16Layout.addView(this)
     }
 
     /**
@@ -171,21 +174,19 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
             spacingRight = widthMeasureSpecSize - spacingLeft - bigCardSize
             spacingTop = (heightMeasureSpecSize - bigCardSize) / 2
             spacingBottom = heightMeasureSpecSize - spacingTop - bigCardSize
-            for (row in 0 until GRID) {
-                for (column in 0 until GRID) {
-                    val cardLeft = spacingLeft + column * (cardSize + spacing)
-                    val cardTop = spacingTop + row * (cardSize + spacing)
-                    val cardRight = cardLeft + cardSize
-                    val cardBottom = cardTop + cardSize
-                    val cardCenterX = (cardLeft + cardRight) / 2
-                    val cardCenterY = (cardTop + cardBottom) / 2
-                    cardLefts[row][column] = cardLeft
-                    cardTops[row][column] = cardTop
-                    cardRights[row][column] = cardRight
-                    cardBottoms[row][column] = cardBottom
-                    cardCenterXs[row][column] = cardCenterX
-                    cardCenterYs[row][column] = cardCenterY
-                }
+            cardIndexes { row, column ->
+                val cardLeft = spacingLeft + column * (cardSize + spacing)
+                val cardTop = spacingTop + row * (cardSize + spacing)
+                val cardRight = cardLeft + cardSize
+                val cardBottom = cardTop + cardSize
+                val cardCenterX = (cardLeft + cardRight) / 2
+                val cardCenterY = (cardTop + cardBottom) / 2
+                cardLefts[row][column] = cardLeft
+                cardTops[row][column] = cardTop
+                cardRights[row][column] = cardRight
+                cardBottoms[row][column] = cardBottom
+                cardCenterXs[row][column] = cardCenterX
+                cardCenterYs[row][column] = cardCenterY
             }
             bigCardLeft = spacingLeft
             bigCardTop = spacingTop
@@ -200,92 +201,59 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
         }
 
         // 测量子视图.
-        for (index in 0 until childCount) {
-            val child = getChildAt(index)
-            when (child) {
-                is Card -> child.measure(cardMeasureSpec, cardMeasureSpec)
-                is BigCard -> child.measure(bigCardMeasureSpec, bigCardMeasureSpec)
-            }
-        }
+        cards { it.measure(cardMeasureSpec, cardMeasureSpec) }
+        bigCard.measure(bigCardMeasureSpec, bigCardMeasureSpec)
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         // 布局子视图.
-        for (index in 0 until childCount) {
-            val child = getChildAt(index)
-            when (child) {
-                is Card -> {
-                    val row = child.row
-                    val column = child.column
-                    if (isIndexValid(row, column)) {
-                        child.layout(cardLefts[row][column], cardTops[row][column], cardRights[row][column],
-                                cardBottoms[row][column])
-                    }
-                }
-                is BigCard -> child.layout(bigCardLeft, bigCardTop, bigCardRight, bigCardBottom)
+        cardsIndexed { row, column, card ->
+            card.layout(
+                    cardLefts[row][column],
+                    cardTops[row][column],
+                    cardRights[row][column],
+                    cardBottoms[row][column])
+        }
+        bigCard.layout(bigCardLeft, bigCardTop, bigCardRight, bigCardBottom)
+    }
+
+    /**
+     * 遍历全部卡片索引.
+     *
+     * @param rowExcept 除外的行.
+     *
+     * @param columnExcept 除外的列.
+     */
+    fun cardIndexes(rowExcept: Int? = null, columnExcept: Int? = null, action: (row: Int, column: Int) -> Unit) {
+        for (row in 0 until GRID) {
+            for (column in 0 until GRID) {
+                if (row == rowExcept && column == columnExcept) continue
+                action(row, column)
             }
         }
     }
 
     /**
-     * 返回行列是否有效. 要么行列都为空, 要么行列都在范围内.
+     * 遍历全部卡片.
+     *
+     * @param rowExcept 除外的行.
+     *
+     * @param columnExcept 除外的列.
      */
-    private fun isIndexValid(row: Int?, column: Int?) = row == null && column == null ||
-            row in 0 until GRID && column in 0 until GRID
-
-    /**
-     * 根据行列返回 [Card].
-     */
-    fun getCard(row: Int, column: Int): Card {
-        if (!isIndexValid(row, column)) throw EBRuntimeException()
-        for (index in 0 until childCount) {
-            val child = getChildAt(index)
-            if (child is Card && child.row == row && child.column == column) return child
-        }
-        throw EBRuntimeException()
+    fun cards(rowExcept: Int? = null, columnExcept: Int? = null, action: (Card) -> Unit) {
+        cardIndexes(rowExcept, columnExcept) { row, column -> action(cards[row][column]) }
     }
 
     /**
-     * 返回 [BigCard].
+     * 遍历全部卡片, 带索引.
+     *
+     * @param rowExcept 除外的行.
+     *
+     * @param columnExcept 除外的列.
      */
-    fun getBigCard(): BigCard {
-        for (index in 0 until childCount) {
-            val child = getChildAt(index)
-            if (child is BigCard) return child
-        }
-        throw EBRuntimeException()
-    }
-
-    /**
-     * 设置全部 [Card] 的可见性.
-     *
-     * @param rowExcept 除外的 [Card] 的行.
-     *
-     * @param columnExcept 除外的 [Card] 的列.
-     */
-    fun setAllCardsVisibility(visibility: Int, rowExcept: Int? = null, columnExcept: Int? = null) {
-        if (!isIndexValid(rowExcept, columnExcept)) throw EBRuntimeException()
-        for (index in 0 until childCount) {
-            val card = getChildAt(index) as? Card ?: continue
-            if (card.row == rowExcept && card.column == columnExcept) continue
-            card.visibility = visibility
-        }
-    }
-
-    /**
-     * 设置全部 [Card] 的可点击性.
-     *
-     * @param rowExcept 除外的 [Card] 的行.
-     *
-     * @param columnExcept 除外的 [Card] 的列.
-     */
-    fun setAllCardsClickable(isClickable: Boolean, rowExcept: Int? = null, columnExcept: Int? = null) {
-        if (!isIndexValid(rowExcept, columnExcept)) throw EBRuntimeException()
-        for (index in 0 until childCount) {
-            val card = getChildAt(index) as? Card ?: continue
-            if (card.row == rowExcept && card.column == columnExcept) continue
-            card.isClickable = isClickable
-        }
+    fun cardsIndexed(rowExcept: Int? = null, columnExcept: Int? = null,
+            action: (row: Int, column: Int, Card) -> Unit) {
+        cardIndexes(rowExcept, columnExcept) { row, column -> action(row, column, cards[row][column]) }
     }
 
     companion object {
