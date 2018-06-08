@@ -54,9 +54,7 @@ abstract class BaseCard(context: Context) : BaseCardLayout(context) {
         AnimatorSet().apply {
             val rotationAnimator = ObjectAnimator().apply {
                 propertyName = if (isHorizontal) "rotationY" else "rotationX"
-                val valueFromSign = if (isClockwise) 1 else -1
-                val valueFromDegree = if (hasBack) 270f else 90f
-                val valueFrom = valueFromSign * valueFromDegree
+                val valueFrom = (if (isClockwise) 1 else -1) * (if (hasBack) 270f else 90f)
                 val valueTo = 0f
                 setFloatValues(valueFrom, valueTo)
                 duration = rotationDuration
@@ -115,9 +113,7 @@ abstract class BaseCard(context: Context) : BaseCardLayout(context) {
             val rotationAnimator = ObjectAnimator().apply {
                 propertyName = if (isHorizontal) "rotationY" else "rotationX"
                 val valueFrom = 0f
-                val valueToSign = if (isClockwise) -1 else 1
-                val valueToDegree = if (hasBack) 270f else 90f
-                val valueTo = valueToSign * valueToDegree
+                val valueTo = (if (isClockwise) -1 else 1) * (if (hasBack) 270f else 90f)
                 setFloatValues(valueFrom, valueTo)
                 duration = rotationDuration
                 interpolator = AccelerateInterpolator()
@@ -171,9 +167,7 @@ abstract class BaseCard(context: Context) : BaseCardLayout(context) {
             val rotationOutAnimator = ObjectAnimator().apply {
                 propertyName = if (isHorizontal) "rotationY" else "rotationX"
                 val valueFrom = 0f
-                val valueToSign = if (isClockwise) -1 else 1
-                val valueToDegree = if (hasBack) 180f else 90f
-                val valueTo = valueToSign * valueToDegree
+                val valueTo = (if (isClockwise) -1 else 1) * (if (hasBack) 180f else 90f)
                 setFloatValues(valueFrom, valueTo)
                 duration = rotationDuration / 2L
                 interpolator = AccelerateInterpolator()
@@ -190,9 +184,7 @@ abstract class BaseCard(context: Context) : BaseCardLayout(context) {
             }
             val rotationInAnimator = ObjectAnimator().apply {
                 propertyName = if (isHorizontal) "rotationY" else "rotationX"
-                val valueFromSign = if (isClockwise) 1 else -1
-                val valueFromDegree = if (hasBack) 180f else 90f
-                val valueFrom = valueFromSign * valueFromDegree
+                val valueFrom = (if (isClockwise) 1 else -1) * (if (hasBack) 180f else 90f)
                 val valueTo = 0f
                 setFloatValues(valueFrom, valueTo)
                 duration = rotationDuration - rotationDuration / 2L

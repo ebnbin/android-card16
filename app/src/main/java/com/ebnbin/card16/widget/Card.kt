@@ -11,6 +11,7 @@ import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.widget.Button
 import com.ebnbin.card16.widget.BaseCard.Companion.ELEVATION_DURATION
+import com.ebnbin.eb.util.EBRuntimeException
 import com.ebnbin.eb.util.dp
 
 /**
@@ -33,13 +34,13 @@ class Card(context: Context) : BaseCard(context) {
                         isHorizontal = false,
                         isClockwise = false,
                         hasBack = false,
-                        rotationDuration = 400L)
+                        rotationDuration = 300L)
             } else {
                 animateCut(
                         isHorizontal = true,
                         isClockwise = false,
                         hasBack = false,
-                        rotationDuration = 400L)
+                        rotationDuration = 300L)
             }
         }
     }
@@ -242,6 +243,215 @@ class Card(context: Context) : BaseCard(context) {
             addListener(animatorListener)
             setTarget(this@Card)
         }.start()
+    }
+
+    /**
+     * 卡片左移动画.
+     *
+     * 开始状态: 位移为 0f.
+     *
+     * 动画过程: 高度加速减速升高, 然后加速减速左移, 然后高度加速减速降低.
+     *
+     * 结束状态: 列减 1, 重置位移.
+     *
+     * 动画时长: 2 * [ELEVATION_DURATION] + [translateDuration].
+     *
+     * @param translateDuration 移动动画时长.
+     */
+    private fun animateMoveLeft(translateDuration: Long) {
+        if (column <= 0) throw EBRuntimeException()
+        AnimatorSet().apply {
+            val elevationInAnimator = ObjectAnimator().apply {
+                propertyName = "elevation"
+                val valueFrom = defElevation
+                val valueTo = maxElevation
+                setFloatValues(valueFrom, valueTo)
+                duration = ELEVATION_DURATION
+                interpolator = AccelerateDecelerateInterpolator()
+            }
+            val translationAnimator = ObjectAnimator().apply {
+                propertyName = "translationX"
+                val valueFrom = 0f
+                val valueTo = -(card16Layout.cardSize.toFloat() + card16Layout.spacing)
+                setFloatValues(valueFrom, valueTo)
+                duration = translateDuration
+                interpolator = AccelerateDecelerateInterpolator()
+            }
+            val elevationOutAnimator = ObjectAnimator().apply {
+                propertyName = "elevation"
+                val valueFrom = maxElevation
+                val valueTo = defElevation
+                setFloatValues(valueFrom, valueTo)
+                duration = ELEVATION_DURATION
+                interpolator = AccelerateDecelerateInterpolator()
+            }
+            playSequentially(elevationInAnimator, translationAnimator, elevationOutAnimator)
+            val animatorListener = CardAnimatorListener(onEnd = {
+                setIndex(row, column - 1)
+                invalidateLayout()
+                translationX = 0f
+            })
+            addListener(animatorListener)
+            setTarget(this@Card)
+        }.start()
+    }
+
+    /**
+     * 卡片右移动画.
+     *
+     * 开始状态: 位移为 0f.
+     *
+     * 动画过程: 高度加速减速升高, 然后加速减速右移, 然后高度加速减速降低.
+     *
+     * 结束状态: 列加 1, 重置位移.
+     *
+     * 动画时长: 2 * [ELEVATION_DURATION] + [translateDuration].
+     *
+     * @param translateDuration 移动动画时长.
+     */
+    private fun animateMoveRight(translateDuration: Long) {
+        if (column >= Card16Layout.GRID - 1) throw EBRuntimeException()
+        AnimatorSet().apply {
+            val elevationInAnimator = ObjectAnimator().apply {
+                propertyName = "elevation"
+                val valueFrom = defElevation
+                val valueTo = maxElevation
+                setFloatValues(valueFrom, valueTo)
+                duration = ELEVATION_DURATION
+                interpolator = AccelerateDecelerateInterpolator()
+            }
+            val translationAnimator = ObjectAnimator().apply {
+                propertyName = "translationX"
+                val valueFrom = 0f
+                val valueTo = card16Layout.cardSize.toFloat() + card16Layout.spacing
+                setFloatValues(valueFrom, valueTo)
+                duration = translateDuration
+                interpolator = AccelerateDecelerateInterpolator()
+            }
+            val elevationOutAnimator = ObjectAnimator().apply {
+                propertyName = "elevation"
+                val valueFrom = maxElevation
+                val valueTo = defElevation
+                setFloatValues(valueFrom, valueTo)
+                duration = ELEVATION_DURATION
+                interpolator = AccelerateDecelerateInterpolator()
+            }
+            playSequentially(elevationInAnimator, translationAnimator, elevationOutAnimator)
+            val animatorListener = CardAnimatorListener(onEnd = {
+                setIndex(row, column + 1)
+                invalidateLayout()
+                translationX = 0f
+            })
+            addListener(animatorListener)
+            setTarget(this@Card)
+        }.start()
+    }
+
+    /**
+     * 卡片上移动画.
+     *
+     * 开始状态: 位移为 0f.
+     *
+     * 动画过程: 高度加速减速升高, 然后加速减速上移, 然后高度加速减速降低.
+     *
+     * 结束状态: 行减 1, 重置位移.
+     *
+     * 动画时长: 2 * [ELEVATION_DURATION] + [translateDuration].
+     *
+     * @param translateDuration 移动动画时长.
+     */
+    private fun animateMoveTop(translateDuration: Long) {
+        if (row <= 0) throw EBRuntimeException()
+        AnimatorSet().apply {
+            val elevationInAnimator = ObjectAnimator().apply {
+                propertyName = "elevation"
+                val valueFrom = defElevation
+                val valueTo = maxElevation
+                setFloatValues(valueFrom, valueTo)
+                duration = ELEVATION_DURATION
+                interpolator = AccelerateDecelerateInterpolator()
+            }
+            val translationAnimator = ObjectAnimator().apply {
+                propertyName = "translationY"
+                val valueFrom = 0f
+                val valueTo = -(card16Layout.cardSize.toFloat() + card16Layout.spacing)
+                setFloatValues(valueFrom, valueTo)
+                duration = translateDuration
+                interpolator = AccelerateDecelerateInterpolator()
+            }
+            val elevationOutAnimator = ObjectAnimator().apply {
+                propertyName = "elevation"
+                val valueFrom = maxElevation
+                val valueTo = defElevation
+                setFloatValues(valueFrom, valueTo)
+                duration = ELEVATION_DURATION
+                interpolator = AccelerateDecelerateInterpolator()
+            }
+            playSequentially(elevationInAnimator, translationAnimator, elevationOutAnimator)
+            val animatorListener = CardAnimatorListener(onEnd = {
+                setIndex(row - 1, column)
+                invalidateLayout()
+                translationY = 0f
+            })
+            addListener(animatorListener)
+            setTarget(this@Card)
+        }.start()
+    }
+
+    /**
+     * 卡片下移动画.
+     *
+     * 开始状态: 位移为 0f.
+     *
+     * 动画过程: 高度加速减速升高, 然后加速减速下移, 然后高度加速减速降低.
+     *
+     * 结束状态: 行加 1, 重置位移.
+     *
+     * 动画时长: 2 * [ELEVATION_DURATION] + [translateDuration].
+     *
+     * @param translateDuration 移动动画时长.
+     */
+    private fun animateMoveBottom(translateDuration: Long) {
+        if (row >= Card16Layout.GRID - 1) throw EBRuntimeException()
+        AnimatorSet().apply {
+            val elevationInAnimator = ObjectAnimator().apply {
+                propertyName = "elevation"
+                val valueFrom = defElevation
+                val valueTo = maxElevation
+                setFloatValues(valueFrom, valueTo)
+                duration = ELEVATION_DURATION
+                interpolator = AccelerateDecelerateInterpolator()
+            }
+            val translationAnimator = ObjectAnimator().apply {
+                propertyName = "translationY"
+                val valueFrom = 0f
+                val valueTo = card16Layout.cardSize.toFloat() + card16Layout.spacing
+                setFloatValues(valueFrom, valueTo)
+                duration = translateDuration
+                interpolator = AccelerateDecelerateInterpolator()
+            }
+            val elevationOutAnimator = ObjectAnimator().apply {
+                propertyName = "elevation"
+                val valueFrom = maxElevation
+                val valueTo = defElevation
+                setFloatValues(valueFrom, valueTo)
+                duration = ELEVATION_DURATION
+                interpolator = AccelerateDecelerateInterpolator()
+            }
+            playSequentially(elevationInAnimator, translationAnimator, elevationOutAnimator)
+            val animatorListener = CardAnimatorListener(onEnd = {
+                setIndex(row + 1, column)
+                invalidateLayout()
+                translationY = 0f
+            })
+            addListener(animatorListener)
+            setTarget(this@Card)
+        }.start()
+    }
+
+    private fun invalidateLayout() {
+        layout(card16Layout.cardLefts[row][column], card16Layout.cardTops[row][column],
+                card16Layout.cardRights[row][column], card16Layout.cardBottoms[row][column])
     }
 
     companion object {

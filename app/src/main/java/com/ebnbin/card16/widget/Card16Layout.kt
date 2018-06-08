@@ -21,8 +21,8 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
         for (row in 0 until GRID) {
             for (column in 0 until GRID) {
                 val card = Card(this.context)
-                card.setIndex(row, column)
                 addView(card)
+                card.setIndex(row, column)
             }
         }
 
@@ -43,7 +43,7 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
     /**
      * 间距.
      */
-    private val spacing = SPACING_DP.dpInt
+    val spacing = SPACING_DP.dpInt
     /**
      * 边距.
      */
@@ -57,7 +57,8 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
     /**
      * [Card] 宽高.
      */
-    private var cardSize = 0
+    var cardSize = 0
+        private set
 
     /**
      * [BigCard] 宽高.
@@ -84,19 +85,19 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
     /**
      * [Card] 左位置.
      */
-    private val cardLefts = Array(GRID) { Array(GRID) { 0 } }
+    val cardLefts = Array(GRID) { Array(GRID) { 0 } }
     /**
      * [Card] 上位置.
      */
-    private val cardTops = Array(GRID) { Array(GRID) { 0 } }
+    val cardTops = Array(GRID) { Array(GRID) { 0 } }
     /**
      * [Card] 右位置.
      */
-    private val cardRights = Array(GRID) { Array(GRID) { 0 } }
+    val cardRights = Array(GRID) { Array(GRID) { 0 } }
     /**
      * [Card] 下位置.
      */
-    private val cardBottoms = Array(GRID) { Array(GRID) { 0 } }
+    val cardBottoms = Array(GRID) { Array(GRID) { 0 } }
     /**
      * [Card] 水平方向中心位置.
      */
@@ -291,7 +292,7 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
         /**
          * 行列数.
          */
-        private const val GRID = 4
+        const val GRID = 4
 
         /**
          * 间距 dp.
