@@ -19,48 +19,95 @@ import android.widget.FrameLayout
  *
  * @param defRadius 默认圆角.
  */
-abstract class BaseCard(context: Context, private val defElevation: Float, val defRadius: Float) : CardView(context) {
+abstract class BaseCard(context: Context, val defElevation: Float, val defRadius: Float) : CardView(context) {
+    /**
+     * 动画时的高度.
+     */
+    val animateElevation = ANIMATE_ELEVATION_MULTIPLE * defElevation
+
+    init {
+        visibility = View.GONE
+        elevation = defElevation
+        radius = defRadius
+    }
+
     protected val card16Layout get() = parent as Card16Layout
 
+    //*****************************************************************************************************************
+    // 卡片正反面.
+
     /**
-     * 最大高度.
+     * 卡片正面根视图.
      */
-    val maxElevation = MAX_ELEVATION_MULTIPLE * defElevation
-
-    private val cardFrontContainerView = FrameLayout(this.context).apply {
+    private val cardFrontRootView = FrameLayout(this.context).apply {
         this@BaseCard.addView(this)
-
         visibility = View.VISIBLE
     }
 
-    private val cardBackContainerView = FrameLayout(this.context).apply {
+    /**
+     * 卡片反面根视图.
+     */
+    private val cardBackRootView = FrameLayout(this.context).apply {
         this@BaseCard.addView(this)
-
         visibility = View.GONE
     }
 
-    protected var cardFrontView: View? = null
-        protected set(value) {
-            if (field === value) return
+    /**
+     * 卡片正面或反面.
+     */
+    private var isCardFront = true
+        set(value) {
+            if (field == value) return
             field = value
-            cardFrontContainerView.removeAllViews()
-            if (field == null) return
-            cardFrontContainerView.addView(field)
+            cardFrontRootView.visibility = if (field) View.VISIBLE else View.GONE
+            cardBackRootView.visibility = if (field) View.GONE else View.VISIBLE
         }
 
-    protected var cardBackView: View? = null
-        protected set(value) {
+    /**
+     * 卡片正面视图.
+     */
+    protected var cardFrontView: View? = null
+        set(value) {
             if (field === value) return
             field = value
-            cardBackContainerView.removeAllViews()
+            cardFrontRootView.removeAllViews()
             if (field == null) return
-            cardBackContainerView.addView(field)
+            cardFrontRootView.addView(field)
         }
+
+    /**
+     * 卡片反面视图.
+     */
+    protected var cardBackView: View? = null
+        set(value) {
+            if (field === value) return
+            field = value
+            cardBackRootView.removeAllViews()
+            if (field == null) return
+            cardBackRootView.addView(field)
+        }
+
+    /**
+     * 翻转动画更新监听器. 监听卡片正反面改变.
+     */
+    protected inner class CardFrontBackAnimatorUpdateListener : ValueAnimator.AnimatorUpdateListener {
+        override fun onAnimationUpdate(animation: ValueAnimator?) {
+            val rotation = animation?.animatedValue as? Float? ?: return
+            val validRotation = (rotation % 360f + 360f) % 360f
+            isCardFront = when (validRotation) {
+                0f, 90f, 180f, 270f -> isCardFront
+                in 90f..270f -> false
+                else -> true
+            }
+        }
+    }
+
+    //*****************************************************************************************************************
 
     /**
      * 卡片出现动画.
      *
-     * 开始状态: 高度为 [maxElevation].
+     * 开始状态: 高度为 [animateElevation].
      *
      * 动画过程: 从 +-90 度或 +-270 度减速翻转到 0 度, 然后高度加速减速降低.
      *
@@ -85,8 +132,7 @@ abstract class BaseCard(context: Context, private val defElevation: Float, val d
                 setFloatValues(valueFrom, valueTo)
                 duration = rotationDuration
                 interpolator = DecelerateInterpolator()
-                val animatorUpdateListener = CardFrontBackAnimatorUpdateListener(isClockwise)
-                addUpdateListener(animatorUpdateListener)
+                addUpdateListener(CardFrontBackAnimatorUpdateListener())
             }
             play(rotationAnimator)
             val animatorListener = CardAnimatorListener()
@@ -125,8 +171,7 @@ abstract class BaseCard(context: Context, private val defElevation: Float, val d
                 setFloatValues(valueFrom, valueTo)
                 duration = rotationDuration
                 interpolator = AccelerateInterpolator()
-                val animatorUpdateListener = CardFrontBackAnimatorUpdateListener(isClockwise)
-                addUpdateListener(animatorUpdateListener)
+                addUpdateListener(CardFrontBackAnimatorUpdateListener())
             }
             play(rotationAnimator)
             val animatorListener = CardAnimatorListener(onEnd = {
@@ -177,8 +222,7 @@ abstract class BaseCard(context: Context, private val defElevation: Float, val d
                     }
                 }
                 addListener(animatorListener)
-                val animatorUpdateListener = CardFrontBackAnimatorUpdateListener(isClockwise)
-                addUpdateListener(animatorUpdateListener)
+                addUpdateListener(CardFrontBackAnimatorUpdateListener())
             }
             val rotationInAnimator = ObjectAnimator().apply {
                 propertyName = if (isHorizontal) "rotationY" else "rotationX"
@@ -187,43 +231,13 @@ abstract class BaseCard(context: Context, private val defElevation: Float, val d
                 setFloatValues(valueFrom, valueTo)
                 duration = rotationDuration - rotationDuration / 2L
                 interpolator = DecelerateInterpolator()
-                val animatorUpdateListener = CardFrontBackAnimatorUpdateListener(isClockwise)
-                addUpdateListener(animatorUpdateListener)
+                addUpdateListener(CardFrontBackAnimatorUpdateListener())
             }
             playSequentially(rotationOutAnimator, rotationInAnimator)
             val animatorListener = CardAnimatorListener()
             addListener(animatorListener)
             setTarget(this@BaseCard)
         }.start()
-    }
-
-    /**
-     * 卡片正面或反面.
-     */
-    var isCardFront = true
-        private set(value) {
-            if (field == value) return
-            field = value
-            cardFrontContainerView.visibility = if (field) View.VISIBLE else View.GONE
-            cardBackContainerView.visibility = if (field) View.GONE else View.VISIBLE
-        }
-
-    /**
-     * 翻转动画更新监听器. 监听卡片正反面改变.
-     *
-     * @param isClockwise 翻转方向顺时针或逆时针.
-     */
-    protected inner class CardFrontBackAnimatorUpdateListener(private val isClockwise: Boolean) :
-            ValueAnimator.AnimatorUpdateListener {
-        override fun onAnimationUpdate(animation: ValueAnimator?) {
-            val rotation = animation?.animatedValue as? Float? ?: return
-            val validRotation = (rotation % 360f + 360f) % 360f
-            isCardFront = when (validRotation) {
-                0f, 90f, 180f, 270f -> isCardFront
-                in 90f..270f -> false
-                else -> true
-            }
-        }
     }
 
     /**
@@ -238,7 +252,7 @@ abstract class BaseCard(context: Context, private val defElevation: Float, val d
 
             visibility = View.VISIBLE
 
-            elevation = maxElevation
+            elevation = animateElevation
 
 //            outlineProvider = null
 
@@ -290,8 +304,8 @@ abstract class BaseCard(context: Context, private val defElevation: Float, val d
 
     companion object {
         /**
-         * 最大高度倍数.
+         * 动画时的高度 (默认高度倍数).
          */
-        private const val MAX_ELEVATION_MULTIPLE = 2f
+        private const val ANIMATE_ELEVATION_MULTIPLE = 2f
     }
 }

@@ -15,10 +15,6 @@ import com.ebnbin.eb.util.sp
  */
 class BigCard(context: Context) : BaseCard(context, DEF_ELEVATION_DP.dp, DEF_RADIUS_DP.dp) {
     init {
-        visibility = View.GONE
-        elevation = DEF_ELEVATION_DP.dp
-        radius = DEF_RADIUS_DP.dp
-
         cardFrontView = TextView(this.context).apply {
             text = "BigCard"
             textSize = 24f.sp
@@ -41,8 +37,7 @@ class BigCard(context: Context) : BaseCard(context, DEF_ELEVATION_DP.dp, DEF_RAD
                 val valueFrom = (if (isClockwise) 1 else -1) * (if (hasBack) 180f else 90f)
                 val valueTo = 0f
                 setFloatValues(valueFrom, valueTo)
-                val animatorUpdateListener = CardFrontBackAnimatorUpdateListener(isClockwise)
-                addUpdateListener(animatorUpdateListener)
+                addUpdateListener(CardFrontBackAnimatorUpdateListener())
             }
             val translationXAnimator = ObjectAnimator().apply {
                 propertyName = "translationX"
@@ -76,8 +71,8 @@ class BigCard(context: Context) : BaseCard(context, DEF_ELEVATION_DP.dp, DEF_RAD
             }
             val elevationAnimator = ObjectAnimator().apply {
                 propertyName = "elevation"
-                val valueFrom = (card16Layout.cards[row][column].maxElevation + maxElevation) / 2f
-                val valueTo = maxElevation
+                val valueFrom = (card16Layout.cards[row][column].animateElevation + animateElevation) / 2f
+                val valueTo = animateElevation
                 setFloatValues(valueFrom, valueTo)
             }
             playTogether(rotationAnimator, translationXAnimator, translationYAnimator, scaleXAnimator,
@@ -135,8 +130,7 @@ class BigCard(context: Context) : BaseCard(context, DEF_ELEVATION_DP.dp, DEF_RAD
                 val valueFrom = 0f
                 val valueTo = (if (isClockwise) -1 else 1) * (if (hasBack) 180f else 90f)
                 setFloatValues(valueFrom, valueTo)
-                val animatorUpdateListener = CardFrontBackAnimatorUpdateListener(isClockwise)
-                addUpdateListener(animatorUpdateListener)
+                addUpdateListener(CardFrontBackAnimatorUpdateListener())
             }
             val translationXAnimator = ObjectAnimator().apply {
                 propertyName = "translationX"
@@ -170,8 +164,8 @@ class BigCard(context: Context) : BaseCard(context, DEF_ELEVATION_DP.dp, DEF_RAD
             }
             val elevationAnimator = ObjectAnimator().apply {
                 propertyName = "elevation"
-                val valueFrom = maxElevation
-                val valueTo = (maxElevation + card16Layout.cards[row][column].maxElevation) / 2f
+                val valueFrom = animateElevation
+                val valueTo = (animateElevation + card16Layout.cards[row][column].animateElevation) / 2f
                 setFloatValues(valueFrom, valueTo)
             }
             playTogether(rotationAnimator, translationXAnimator, translationYAnimator, scaleXAnimator,

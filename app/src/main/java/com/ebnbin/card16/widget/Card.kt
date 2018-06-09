@@ -96,8 +96,7 @@ class Card(context: Context, row: Int, column: Int) : BaseCard(context, DEF_ELEV
                 val valueFrom = 0f
                 val valueTo = (if (isClockwise) -1 else 1) * (if (hasBack) 180f else 90f)
                 setFloatValues(valueFrom, valueTo)
-                val animatorUpdateListener = CardFrontBackAnimatorUpdateListener(isClockwise)
-                addUpdateListener(animatorUpdateListener)
+                addUpdateListener(CardFrontBackAnimatorUpdateListener())
             }
             val translationXAnimator = ObjectAnimator().apply {
                 propertyName = "translationX"
@@ -131,8 +130,8 @@ class Card(context: Context, row: Int, column: Int) : BaseCard(context, DEF_ELEV
             }
             val elevationAnimator = ObjectAnimator().apply {
                 propertyName = "elevation"
-                val valueFrom = maxElevation
-                val valueTo = (maxElevation + card16Layout.bigCard.maxElevation) / 2f
+                val valueFrom = animateElevation
+                val valueTo = (animateElevation + card16Layout.bigCard.animateElevation) / 2f
                 setFloatValues(valueFrom, valueTo)
             }
             playTogether(rotationAnimator, translationXAnimator, translationYAnimator, scaleXAnimator,
@@ -165,8 +164,7 @@ class Card(context: Context, row: Int, column: Int) : BaseCard(context, DEF_ELEV
                 val valueFrom = (if (isClockwise) 1 else -1) * (if (hasBack) 180f else 90f)
                 val valueTo = 0f
                 setFloatValues(valueFrom, valueTo)
-                val animatorUpdateListener = CardFrontBackAnimatorUpdateListener(isClockwise)
-                addUpdateListener(animatorUpdateListener)
+                addUpdateListener(CardFrontBackAnimatorUpdateListener())
             }
             val translationXAnimator = ObjectAnimator().apply {
                 propertyName = "translationX"
@@ -200,8 +198,8 @@ class Card(context: Context, row: Int, column: Int) : BaseCard(context, DEF_ELEV
             }
             val elevationAnimator = ObjectAnimator().apply {
                 propertyName = "elevation"
-                val valueFrom = (card16Layout.bigCard.maxElevation + maxElevation) / 2f
-                val valueTo = maxElevation
+                val valueFrom = (card16Layout.bigCard.animateElevation + animateElevation) / 2f
+                val valueTo = animateElevation
                 setFloatValues(valueFrom, valueTo)
             }
             playTogether(rotationAnimator, translationXAnimator, translationYAnimator, scaleXAnimator,
