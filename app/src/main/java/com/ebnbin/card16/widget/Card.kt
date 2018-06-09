@@ -8,9 +8,10 @@ import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
-import android.widget.Button
+import android.widget.TextView
 import com.ebnbin.eb.util.EBRuntimeException
 import com.ebnbin.eb.util.dp
+import com.ebnbin.eb.util.sp
 
 /**
  * 卡片.
@@ -21,11 +22,14 @@ import com.ebnbin.eb.util.dp
  */
 @SuppressLint("ViewConstructor")
 class Card(context: Context, row: Int, column: Int) : BaseCard(context, DEF_ELEVATION_DP.dp, DEF_RADIUS_DP.dp) {
-    private val button = Button(this.context).apply {
-        this@Card.addView(this, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+    private val textView = TextView(this.context).apply {
+        text = "$row-$column"
+        textSize = 6f.sp
     }
 
     init {
+        cardFrontView = textView
+
         setOnClickListener {
             if (row % 2 == column % 2) {
                 animateZoomIn(
@@ -58,7 +62,7 @@ class Card(context: Context, row: Int, column: Int) : BaseCard(context, DEF_ELEV
         this.row = row
         this.column = column
 
-        button.text = "$row-$column"
+        textView.text = "$row-$column"
     }
 
     /**
@@ -85,7 +89,7 @@ class Card(context: Context, row: Int, column: Int) : BaseCard(context, DEF_ELEV
             isClockwise: Boolean,
             hasBack: Boolean,
             rotationDuration: Long,
-            onCardCut: (() -> Unit)? = null) {
+            onCardCut: (() -> View)? = null) {
         AnimatorSet().apply {
             val rotationAnimator = ObjectAnimator().apply {
                 propertyName = if (isHorizontal) "rotationY" else "rotationX"
@@ -140,7 +144,7 @@ class Card(context: Context, row: Int, column: Int) : BaseCard(context, DEF_ELEV
 
                 card16Layout.bigCard.animateZoomIn(row, column, isHorizontal, isClockwise, hasBack, rotationDuration)
 
-                onCardCut?.invoke()
+                if (onCardCut != null) cardFrontView = onCardCut()
             })
             addListener(animatorListener)
             setTarget(this@Card)

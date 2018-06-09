@@ -6,7 +6,7 @@ import android.content.Context
 import android.view.View
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
-import android.widget.Button
+import android.widget.TextView
 import com.ebnbin.eb.util.dp
 import com.ebnbin.eb.util.sp
 
@@ -18,12 +18,11 @@ class BigCard(context: Context) : BaseCard(context, DEF_ELEVATION_DP.dp, DEF_RAD
         visibility = View.GONE
         elevation = DEF_ELEVATION_DP.dp
         radius = DEF_RADIUS_DP.dp
-    }
 
-    private val button = Button(this.context).apply {
-        text = "BigCard"
-        textSize = 16f.sp
-        this@BigCard.addView(this, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+        cardFrontView = TextView(this.context).apply {
+            text = "BigCard"
+            textSize = 24f.sp
+        }
     }
 
     /**
@@ -129,7 +128,7 @@ class BigCard(context: Context) : BaseCard(context, DEF_ELEVATION_DP.dp, DEF_RAD
             isClockwise: Boolean,
             hasBack: Boolean,
             rotationDuration: Long,
-            onCardCut: (() -> Unit)? = null) {
+            onCardCut: (() -> View)? = null) {
         AnimatorSet().apply {
             val rotationAnimator = ObjectAnimator().apply {
                 propertyName = if (isHorizontal) "rotationY" else "rotationX"
@@ -186,7 +185,7 @@ class BigCard(context: Context) : BaseCard(context, DEF_ELEVATION_DP.dp, DEF_RAD
 
                 card16Layout.cards[row][column].animateZoomOut(isHorizontal, isClockwise, hasBack, rotationDuration)
 
-                onCardCut?.invoke()
+                if (onCardCut != null) cardFrontView = onCardCut()
             })
             addListener(animatorListener)
             setTarget(this@BigCard)

@@ -10,6 +10,7 @@ import android.support.v7.widget.CardView
 import android.view.View
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
+import android.widget.FrameLayout
 
 /**
  * 基础卡片.
@@ -25,6 +26,36 @@ abstract class BaseCard(context: Context, private val defElevation: Float, val d
      * 最大高度.
      */
     val maxElevation = MAX_ELEVATION_MULTIPLE * defElevation
+
+    private val cardFrontContainerView = FrameLayout(this.context).apply {
+        this@BaseCard.addView(this)
+
+        visibility = View.VISIBLE
+    }
+
+    private val cardBackContainerView = FrameLayout(this.context).apply {
+        this@BaseCard.addView(this)
+
+        visibility = View.GONE
+    }
+
+    protected var cardFrontView: View? = null
+        protected set(value) {
+            if (field === value) return
+            field = value
+            cardFrontContainerView.removeAllViews()
+            if (field == null) return
+            cardFrontContainerView.addView(field)
+        }
+
+    protected var cardBackView: View? = null
+        protected set(value) {
+            if (field === value) return
+            field = value
+            cardBackContainerView.removeAllViews()
+            if (field == null) return
+            cardBackContainerView.addView(field)
+        }
 
     /**
      * 卡片出现动画.
@@ -129,7 +160,7 @@ abstract class BaseCard(context: Context, private val defElevation: Float, val d
             isClockwise: Boolean,
             hasBack: Boolean,
             rotationDuration: Long,
-            onCardCut: (() -> Unit)? = null) {
+            onCardCut: (() -> View)? = null) {
         AnimatorSet().apply {
             val rotationOutAnimator = ObjectAnimator().apply {
                 propertyName = if (isHorizontal) "rotationY" else "rotationX"
@@ -142,7 +173,7 @@ abstract class BaseCard(context: Context, private val defElevation: Float, val d
                     override fun onAnimationEnd(animation: Animator?) {
                         super.onAnimationEnd(animation)
 
-                        onCardCut?.invoke()
+                        if (onCardCut != null) cardFrontView = onCardCut()
                     }
                 }
                 addListener(animatorListener)
@@ -173,18 +204,9 @@ abstract class BaseCard(context: Context, private val defElevation: Float, val d
         private set(value) {
             if (field == value) return
             field = value
-            onCardFrontBack(field)
+            cardFrontContainerView.visibility = if (field) View.VISIBLE else View.GONE
+            cardBackContainerView.visibility = if (field) View.GONE else View.VISIBLE
         }
-
-    /**
-     * 卡片正反面改变回调.
-     */
-    protected open fun onCardFrontBack(isFront: Boolean) {
-        // TODO
-        for (index in 0 until childCount) {
-            getChildAt(index).visibility = if (isFront) View.VISIBLE else View.GONE
-        }
-    }
 
     /**
      * 翻转动画更新监听器. 监听卡片正反面改变.
@@ -197,8 +219,7 @@ abstract class BaseCard(context: Context, private val defElevation: Float, val d
             val rotation = animation?.animatedValue as? Float? ?: return
             val validRotation = (rotation % 360f + 360f) % 360f
             isCardFront = when (validRotation) {
-                90f -> isClockwise
-                270f -> !isClockwise
+                0f, 90f, 180f, 270f -> isCardFront
                 in 90f..270f -> false
                 else -> true
             }
