@@ -105,181 +105,155 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
     //*****************************************************************************************************************
 
     /**
-     * 卡片出现动画.
+     * 根据参数创建翻转动画.
      *
-     * 开始状态: 高度为 [animateElevation].
-     *
-     * 动画过程: 从 +-90 度或 +-270 度减速翻转到 0 度, 然后高度加速减速降低.
+     * @param isIn 出现或消失.
      *
      * @param isHorizontal 水平方向或垂直方向翻转.
      *
      * @param isClockwise 从上往下或从左往右视角, 顺时针或逆时针翻转.
      *
-     * @param hasBack 卡片翻转时是否有背面 (空白面).
-     *
-     * @param rotationDuration 翻转动画时长.
+     * @param hasCardBack 翻转动画是否显示卡片反面.
      */
-    protected fun animateIn(
+    protected fun rotationAnimator(
+            isIn: Boolean,
             isHorizontal: Boolean,
             isClockwise: Boolean,
-            hasBack: Boolean,
-            rotationDuration: Long) {
-        AnimatorSet().apply {
-            val rotationAnimator = ObjectAnimator().apply {
-                propertyName = if (isHorizontal) "rotationY" else "rotationX"
-                val valueFrom = (if (isClockwise) 1 else -1) * (if (hasBack) 270f else 90f)
-                val valueTo = 0f
-                setFloatValues(valueFrom, valueTo)
-                duration = rotationDuration
-                interpolator = DecelerateInterpolator()
-                addUpdateListener(CardFrontBackAnimatorUpdateListener())
-            }
-            play(rotationAnimator)
-            val animatorListener = CardAnimatorListener()
-            addListener(animatorListener)
-            setTarget(this@BaseCard)
-        }.start()
+            hasCardBack: Boolean) = ObjectAnimator().apply {
+        propertyName = if (isHorizontal) "rotationY" else "rotationX"
+        val degree = if (hasCardBack) 270f else 90f
+        val valueFrom = if (isIn) (if (isClockwise) 1 else -1) * degree else 0f
+        val valueTo = if (isIn) 0f else (if (isClockwise) -1 else 1) * degree
+        setFloatValues(valueFrom, valueTo)
+        interpolator = if (isIn) DecelerateInterpolator() else AccelerateInterpolator()
+        addUpdateListener(CardFrontBackAnimatorUpdateListener())
     }
 
+    //*****************************************************************************************************************
+
     /**
-     * 卡片消失动画.
+     * 卡片出现或消失动画.
      *
-     * 开始状态: 翻转角度为 0 度.
-     *
-     * 动画过程: 高度加速减速升高, 然后从 0 度加速翻转到 +-90 度或 +-270 度.
-     *
-     * 结束状态: 移除当前卡片.
+     * @param isIn 出现或消失.
      *
      * @param isHorizontal 水平方向或垂直方向翻转.
      *
      * @param isClockwise 从上往下或从左往右视角, 顺时针或逆时针翻转.
      *
-     * @param hasBack 卡片翻转时是否有背面 (空白面).
+     * @param hasCardBack 翻转动画是否显示卡片反面.
      *
-     * @param rotationDuration 翻转动画时长.
+     * @param duration 动画时长.
+     *
+     * @param startDelay 动画延时.
+     *
+     * @param onStart 动画开始回调.
+     *
+     * @param onEnd 动画结束回调.
+     *
+     * @return 当前动画.
      */
-    protected fun animateOut(
+    protected fun animateInOut(
+            isIn: Boolean,
             isHorizontal: Boolean,
             isClockwise: Boolean,
-            hasBack: Boolean,
-            rotationDuration: Long) {
-        AnimatorSet().apply {
-            val rotationAnimator = ObjectAnimator().apply {
-                propertyName = if (isHorizontal) "rotationY" else "rotationX"
-                val valueFrom = 0f
-                val valueTo = (if (isClockwise) -1 else 1) * (if (hasBack) 270f else 90f)
-                setFloatValues(valueFrom, valueTo)
-                duration = rotationDuration
-                interpolator = AccelerateInterpolator()
-                addUpdateListener(CardFrontBackAnimatorUpdateListener())
+            hasCardBack: Boolean,
+            duration: Long,
+            startDelay: Long,
+            onStart: ((Animator) -> Unit)?,
+            onEnd: ((Animator) -> Unit)?): Animator =
+            rotationAnimator(isIn, isHorizontal, isClockwise, hasCardBack).apply {
+                this.duration = duration
+                this.startDelay = startDelay
+                addListener(CardAnimatorListener(onStart, onEnd))
+                target = this@BaseCard
+                start()
             }
-            play(rotationAnimator)
-            val animatorListener = CardAnimatorListener(onEnd = {
-                // TODO
-            })
-            addListener(animatorListener)
-            setTarget(this@BaseCard)
-        }.start()
-    }
 
     /**
      * 卡片切换动画.
      *
-     * 开始状态: 翻转角度为 0 度.
-     *
-     * 动画过程: 高度加速减速升高, 然后从 0 度加速翻转到 +-90 度或 +-180 度, 然后从 +-270 度或 +-180 减速翻转到 0 度,
-     * 然后高度加速减速降低.
-     *
      * @param isHorizontal 水平方向或垂直方向翻转.
      *
      * @param isClockwise 从上往下或从左往右视角, 顺时针或逆时针翻转.
      *
-     * @param hasBack 卡片翻转时是否有背面 (空白面).
+     * @param hasCardBack 翻转动画是否显示卡片反面.
      *
-     * @param rotationDuration 翻转动画时长. 包括两个动画过程.
+     * @param duration 动画时长.
      *
-     * @param onCardCut 卡片切换回调.
+     * @param startDelay 动画延时.
+     *
+     * @param onCut 卡片切换回调. 返回新的卡片正面视图.
+     *
+     * @param onStart 动画开始回调.
+     *
+     * @param onEnd 动画结束回调.
+     *
+     * @return 当前动画.
      */
     protected fun animateCut(
             isHorizontal: Boolean,
             isClockwise: Boolean,
-            hasBack: Boolean,
-            rotationDuration: Long,
-            onCardCut: (() -> View)? = null) {
-        AnimatorSet().apply {
-            val rotationOutAnimator = ObjectAnimator().apply {
-                propertyName = if (isHorizontal) "rotationY" else "rotationX"
-                val valueFrom = 0f
-                val valueTo = (if (isClockwise) -1 else 1) * (if (hasBack) 180f else 90f)
-                setFloatValues(valueFrom, valueTo)
-                duration = rotationDuration / 2L
-                interpolator = AccelerateInterpolator()
-                val animatorListener = object : AnimatorListenerAdapter() {
-                    override fun onAnimationEnd(animation: Animator?) {
-                        super.onAnimationEnd(animation)
-
-                        if (onCardCut != null) cardFrontView = onCardCut()
-                    }
+            hasCardBack: Boolean,
+            duration: Long,
+            startDelay: Long,
+            onCut: (() -> View)?,
+            onStart: ((Animator) -> Unit)?,
+            onEnd: ((Animator) -> Unit)?): Animator =
+            AnimatorSet().apply {
+                val rotationOutAnimator = rotationAnimator(false, isHorizontal, isClockwise, hasCardBack).apply {
+                    this.duration = duration / 2L
                 }
-                addListener(animatorListener)
-                addUpdateListener(CardFrontBackAnimatorUpdateListener())
+                val rotationInAnimator = rotationAnimator(true, isHorizontal, isClockwise, hasCardBack).apply {
+                    this.duration = duration - duration / 2L
+                    addListener(object : AnimatorListenerAdapter() {
+                        override fun onAnimationStart(animation: Animator?) {
+                            super.onAnimationStart(animation)
+
+                            onCut ?: return
+                            cardFrontView = onCut()
+                        }
+                    })
+                }
+                playSequentially(rotationOutAnimator, rotationInAnimator)
+                this.startDelay = startDelay
+                addListener(CardAnimatorListener(onStart, onEnd))
+                setTarget(this@BaseCard)
+                start()
             }
-            val rotationInAnimator = ObjectAnimator().apply {
-                propertyName = if (isHorizontal) "rotationY" else "rotationX"
-                val valueFrom = (if (isClockwise) 1 else -1) * (if (hasBack) 180f else 90f)
-                val valueTo = 0f
-                setFloatValues(valueFrom, valueTo)
-                duration = rotationDuration - rotationDuration / 2L
-                interpolator = DecelerateInterpolator()
-                addUpdateListener(CardFrontBackAnimatorUpdateListener())
-            }
-            playSequentially(rotationOutAnimator, rotationInAnimator)
-            val animatorListener = CardAnimatorListener()
-            addListener(animatorListener)
-            setTarget(this@BaseCard)
-        }.start()
-    }
+
+    //*****************************************************************************************************************
 
     /**
-     * 动画开始时显示当前视图. 动画结束时递归移除全部动画监听器.
-     * 动画开始时设置全部卡片和大卡片不可点击. 动画结束时设置全部卡片和大卡片可点击.
+     * 卡片动画监听器.
      */
-    protected open inner class CardAnimatorListener(
+    protected inner class CardAnimatorListener(
             private val onStart: ((Animator) -> Unit)? = null,
             private val onEnd: ((Animator) -> Unit)? = null) : Animator.AnimatorListener {
-        final override fun onAnimationStart(animation: Animator?) {
+        override fun onAnimationStart(animation: Animator?) {
             animation ?: return
 
-            visibility = View.VISIBLE
-
             elevation = animateElevation
-
-//            outlineProvider = null
 
             // TODO
             card16Layout.cards { it.isClickable = false }
             card16Layout.bigCard.isClickable = false
 
-            onStart(animation)
+            visibility = View.VISIBLE
+
             onStart?.invoke(animation)
         }
 
-        protected open fun onStart(animator: Animator) = Unit
-
-        final override fun onAnimationEnd(animation: Animator?) {
+        override fun onAnimationEnd(animation: Animator?) {
             animation ?: return
 
-            elevation = defElevation
-
-//            outlineProvider = ViewOutlineProvider.BACKGROUND
-
             removeAllListeners(animation)
+
+            elevation = defElevation
 
             // TODO
             card16Layout.cards { it.isClickable = true }
             card16Layout.bigCard.isClickable = true
 
-            onEnd(animation)
             onEnd?.invoke(animation)
         }
 
@@ -295,11 +269,9 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
             }
         }
 
-        protected open fun onEnd(animator: Animator) = Unit
+        override fun onAnimationCancel(animation: Animator?) = Unit
 
-        final override fun onAnimationCancel(animation: Animator?) = Unit
-
-        final override fun onAnimationRepeat(animation: Animator?) = Unit
+        override fun onAnimationRepeat(animation: Animator?) = Unit
     }
 
     companion object {

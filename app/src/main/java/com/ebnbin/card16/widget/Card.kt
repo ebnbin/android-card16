@@ -10,6 +10,7 @@ import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.widget.TextView
 import com.ebnbin.eb.util.EBRuntimeException
+import com.ebnbin.eb.util.RandomHelper
 import com.ebnbin.eb.util.dp
 import com.ebnbin.eb.util.sp
 
@@ -41,10 +42,24 @@ class Card(context: Context, row: Int, column: Int) : BaseCard(context, DEF_ELEV
                 animateCut(
                         isHorizontal = true,
                         isClockwise = false,
-                        hasBack = false,
-                        rotationDuration = 300L)
+                        hasCardBack = false,
+                        duration = 300L,
+                        startDelay = 0L,
+                        onCut = null,
+                        onStart = null,
+                        onEnd = null)
             }
         }
+
+        animateInOut(
+                isIn = true,
+                isHorizontal = RandomHelper.nextBoolean(),
+                isClockwise = RandomHelper.nextBoolean(),
+                hasCardBack = RandomHelper.nextBoolean(),
+                duration = RandomHelper.nextLong(450L, 1200L),
+                startDelay = RandomHelper.nextLong(0L, 1000L),
+                onStart = null,
+                onEnd = null)
     }
 
     /**
