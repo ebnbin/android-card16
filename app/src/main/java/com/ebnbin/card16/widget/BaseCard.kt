@@ -8,7 +8,6 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.support.v7.widget.CardView
 import android.view.View
-import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 
@@ -39,8 +38,6 @@ abstract class BaseCard(context: Context) : CardView(context) {
      *
      * 动画过程: 从 +-90 度或 +-270 度减速翻转到 0 度, 然后高度加速减速降低.
      *
-     * 动画时长: [rotationDuration] + [ELEVATION_DURATION].
-     *
      * @param isHorizontal 水平方向或垂直方向翻转.
      *
      * @param isClockwise 从上往下或从左往右视角, 顺时针或逆时针翻转.
@@ -65,15 +62,7 @@ abstract class BaseCard(context: Context) : CardView(context) {
                 val animatorUpdateListener = CardFrontBackAnimatorUpdateListener(isClockwise)
                 addUpdateListener(animatorUpdateListener)
             }
-            val elevationAnimator = ObjectAnimator().apply {
-                propertyName = "elevation"
-                val valueFrom = maxElevation
-                val valueTo = defElevation
-                setFloatValues(valueFrom, valueTo)
-                duration = ELEVATION_DURATION
-                interpolator = AccelerateDecelerateInterpolator()
-            }
-            playSequentially(rotationAnimator, elevationAnimator)
+            play(rotationAnimator)
             val animatorListener = CardAnimatorListener()
             addListener(animatorListener)
             setTarget(this@BaseCard)
@@ -89,8 +78,6 @@ abstract class BaseCard(context: Context) : CardView(context) {
      *
      * 结束状态: 移除当前卡片.
      *
-     * 动画时长: [ELEVATION_DURATION] + [rotationDuration].
-     *
      * @param isHorizontal 水平方向或垂直方向翻转.
      *
      * @param isClockwise 从上往下或从左往右视角, 顺时针或逆时针翻转.
@@ -105,14 +92,6 @@ abstract class BaseCard(context: Context) : CardView(context) {
             hasBack: Boolean,
             rotationDuration: Long) {
         AnimatorSet().apply {
-            val elevationAnimator = ObjectAnimator().apply {
-                propertyName = "elevation"
-                val valueFrom = defElevation
-                val valueTo = maxElevation
-                setFloatValues(valueFrom, valueTo)
-                duration = ELEVATION_DURATION
-                interpolator = AccelerateDecelerateInterpolator()
-            }
             val rotationAnimator = ObjectAnimator().apply {
                 propertyName = if (isHorizontal) "rotationY" else "rotationX"
                 val valueFrom = 0f
@@ -123,7 +102,7 @@ abstract class BaseCard(context: Context) : CardView(context) {
                 val animatorUpdateListener = CardFrontBackAnimatorUpdateListener(isClockwise)
                 addUpdateListener(animatorUpdateListener)
             }
-            playSequentially(elevationAnimator, rotationAnimator)
+            play(rotationAnimator)
             val animatorListener = CardAnimatorListener(onEnd = {
                 // TODO
             })
@@ -139,8 +118,6 @@ abstract class BaseCard(context: Context) : CardView(context) {
      *
      * 动画过程: 高度加速减速升高, 然后从 0 度加速翻转到 +-90 度或 +-180 度, 然后从 +-270 度或 +-180 减速翻转到 0 度,
      * 然后高度加速减速降低.
-     *
-     * 动画时长: 2 * [ELEVATION_DURATION] + [rotationDuration].
      *
      * @param isHorizontal 水平方向或垂直方向翻转.
      *
@@ -159,14 +136,6 @@ abstract class BaseCard(context: Context) : CardView(context) {
             rotationDuration: Long,
             onCardCut: (() -> Unit)? = null) {
         AnimatorSet().apply {
-            val elevationInAnimator = ObjectAnimator().apply {
-                propertyName = "elevation"
-                val valueFrom = defElevation
-                val valueTo = maxElevation
-                setFloatValues(valueFrom, valueTo)
-                duration = ELEVATION_DURATION
-                interpolator = AccelerateDecelerateInterpolator()
-            }
             val rotationOutAnimator = ObjectAnimator().apply {
                 propertyName = if (isHorizontal) "rotationY" else "rotationX"
                 val valueFrom = 0f
@@ -195,15 +164,7 @@ abstract class BaseCard(context: Context) : CardView(context) {
                 val animatorUpdateListener = CardFrontBackAnimatorUpdateListener(isClockwise)
                 addUpdateListener(animatorUpdateListener)
             }
-            val elevationOutAnimator = ObjectAnimator().apply {
-                propertyName = "elevation"
-                val valueFrom = maxElevation
-                val valueTo = defElevation
-                setFloatValues(valueFrom, valueTo)
-                duration = ELEVATION_DURATION
-                interpolator = AccelerateDecelerateInterpolator()
-            }
-            playSequentially(elevationInAnimator, rotationOutAnimator, rotationInAnimator, elevationOutAnimator)
+            playSequentially(rotationOutAnimator, rotationInAnimator)
             val animatorListener = CardAnimatorListener()
             addListener(animatorListener)
             setTarget(this@BaseCard)
@@ -261,6 +222,10 @@ abstract class BaseCard(context: Context) : CardView(context) {
 
             visibility = View.VISIBLE
 
+            elevation = maxElevation
+
+//            outlineProvider = null
+
             // TODO
             card16Layout.cards { it.isClickable = false }
             card16Layout.bigCard.isClickable = false
@@ -273,6 +238,10 @@ abstract class BaseCard(context: Context) : CardView(context) {
 
         final override fun onAnimationEnd(animation: Animator?) {
             animation ?: return
+
+            elevation = defElevation
+
+//            outlineProvider = ViewOutlineProvider.BACKGROUND
 
             removeAllListeners(animation)
 
@@ -305,8 +274,8 @@ abstract class BaseCard(context: Context) : CardView(context) {
 
     companion object {
         /**
-         * 高度动画时长.
+         * 最大高度倍数.
          */
-        const val ELEVATION_DURATION = 50L
+        const val MAX_ELEVATION_MULTIPLE = 2f
     }
 }
