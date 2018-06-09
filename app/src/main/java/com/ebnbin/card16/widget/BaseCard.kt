@@ -13,23 +13,18 @@ import android.view.animation.DecelerateInterpolator
 
 /**
  * 基础卡片.
+ *
+ * @param defElevation 默认高度.
+ *
+ * @param defRadius 默认圆角.
  */
-abstract class BaseCard(context: Context) : CardView(context) {
+abstract class BaseCard(context: Context, private val defElevation: Float, val defRadius: Float) : CardView(context) {
     protected val card16Layout get() = parent as Card16Layout
 
     /**
-     * 默认高度.
-     */
-    protected abstract val defElevation: Float
-    /**
      * 最大高度.
      */
-    abstract val maxElevation: Float
-
-    /**
-     * 默认圆角.
-     */
-    abstract val defRadius: Float
+    val maxElevation = MAX_ELEVATION_MULTIPLE * defElevation
 
     /**
      * 卡片出现动画.
@@ -276,6 +271,6 @@ abstract class BaseCard(context: Context) : CardView(context) {
         /**
          * 最大高度倍数.
          */
-        const val MAX_ELEVATION_MULTIPLE = 2f
+        private const val MAX_ELEVATION_MULTIPLE = 2f
     }
 }

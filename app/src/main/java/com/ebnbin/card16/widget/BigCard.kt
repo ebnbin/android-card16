@@ -13,12 +13,7 @@ import com.ebnbin.eb.util.sp
 /**
  * 大卡片.
  */
-class BigCard(context: Context) : BaseCard(context) {
-    override val defElevation = DEF_ELEVATION_DP.dp
-    override val maxElevation = MAX_ELEVATION_MULTIPLE * defElevation
-
-    override val defRadius = DEF_RADIUS_DP.dp
-
+class BigCard(context: Context) : BaseCard(context, DEF_ELEVATION_DP.dp, DEF_RADIUS_DP.dp) {
     init {
         visibility = View.GONE
         elevation = DEF_ELEVATION_DP.dp

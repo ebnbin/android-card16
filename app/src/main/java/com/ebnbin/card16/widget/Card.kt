@@ -2,6 +2,7 @@ package com.ebnbin.card16.widget
 
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
+import android.annotation.SuppressLint
 import android.content.Context
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
@@ -13,13 +14,13 @@ import com.ebnbin.eb.util.dp
 
 /**
  * 卡片.
+ *
+ * @param row 初始化行.
+ *
+ * @param column 初始化列.
  */
-class Card(context: Context) : BaseCard(context) {
-    override val defElevation = DEF_ELEVATION_DP.dp
-    override val maxElevation = MAX_ELEVATION_MULTIPLE * defElevation
-
-    override val defRadius = DEF_RADIUS_DP.dp
-
+@SuppressLint("ViewConstructor")
+class Card(context: Context, row: Int, column: Int) : BaseCard(context, DEF_ELEVATION_DP.dp, DEF_RADIUS_DP.dp) {
     private val button = Button(this.context).apply {
         this@Card.addView(this, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
     }
@@ -45,15 +46,15 @@ class Card(context: Context) : BaseCard(context) {
     /**
      * 行.
      */
-    var row = 0
+    var row = row
         private set
     /**
      * 列.
      */
-    var column = 0
+    var column = column
         private set
 
-    fun setIndex(row: Int, column: Int) {
+    private fun setIndex(row: Int, column: Int) {
         this.row = row
         this.column = column
 

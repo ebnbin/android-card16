@@ -20,9 +20,8 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
      */
     val cards = Array(GRID) { row ->
         Array(GRID) { column ->
-            Card(this.context).apply {
+            Card(this.context, row, column).apply {
                 this@Card16Layout.addView(this)
-                setIndex(row, column)
             }
         }
     }
