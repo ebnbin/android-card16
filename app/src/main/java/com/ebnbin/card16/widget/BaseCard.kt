@@ -139,14 +139,6 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
         addUpdateListener(CardFrontBackAnimatorUpdateListener())
     }
 
-    // TODO
-    protected fun rootAnimatorSet(animator: Animator, startDelay: Long) = AnimatorSet().apply {
-        play(animator)
-        this.startDelay = startDelay
-        setTarget(this@BaseCard)
-        start()
-    }
-
     //*****************************************************************************************************************
 
     /**
@@ -178,14 +170,17 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
             duration: Long,
             startDelay: Long,
             onStart: ((Animator) -> Unit)?,
-            onEnd: ((Animator) -> Unit)?): Animator =
-            rotationAnimator(isIn, isHorizontal, isClockwise, hasCardBack, true).apply {
-                this.duration = duration
-                this.startDelay = startDelay
-                addListener(CardAnimatorListener(onStart, onEnd))
-                target = this@BaseCard
-                start()
-            }
+            onEnd: ((Animator) -> Unit)?):
+            Animator = AnimatorSet().apply {
+        val rotationAnimator = rotationAnimator(isIn, isHorizontal, isClockwise, hasCardBack, true).apply {
+            this.duration = duration
+            addListener(CardAnimatorListener(onStart, onEnd))
+        }
+        play(rotationAnimator)
+        this.startDelay = startDelay
+        setTarget(this@BaseCard)
+        start()
+    }
 
     /**
      * 卡片切换动画.
@@ -216,28 +211,31 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
             startDelay: Long,
             onCut: (() -> View)?,
             onStart: ((Animator) -> Unit)?,
-            onEnd: ((Animator) -> Unit)?): Animator =
-            AnimatorSet().apply {
-                val rotationOutAnimator = rotationAnimator(false, isHorizontal, isClockwise, hasCardBack,
-                        false).apply {
-                    this.duration = duration / 2L
-                }
-                val rotationInAnimator = rotationAnimator(true, isHorizontal, isClockwise, hasCardBack, false).apply {
-                    this.duration = duration - duration / 2L
-                    addListener(object : AnimatorListenerAdapter() {
-                        override fun onAnimationStart(animation: Animator?) {
-                            super.onAnimationStart(animation)
-
-                            if (onCut != null) cardFrontView = onCut()
-                        }
-                    })
-                }
-                playSequentially(rotationOutAnimator, rotationInAnimator)
-                this.startDelay = startDelay
-                addListener(CardAnimatorListener(onStart, onEnd))
-                setTarget(this@BaseCard)
-                start()
+            onEnd: ((Animator) -> Unit)?):
+            Animator = AnimatorSet().apply {
+        val animatorSet = AnimatorSet().apply {
+            val rotationOutAnimator = rotationAnimator(false, isHorizontal, isClockwise, hasCardBack,
+                    false).apply {
+                this.duration = duration / 2L
             }
+            val rotationInAnimator = rotationAnimator(true, isHorizontal, isClockwise, hasCardBack, false).apply {
+                this.duration = duration - duration / 2L
+                addListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationStart(animation: Animator?) {
+                        super.onAnimationStart(animation)
+
+                        if (onCut != null) cardFrontView = onCut()
+                    }
+                })
+            }
+            playSequentially(rotationOutAnimator, rotationInAnimator)
+            addListener(CardAnimatorListener(onStart, onEnd))
+        }
+        play(animatorSet)
+        this.startDelay = startDelay
+        setTarget(this@BaseCard)
+        start()
+    }
 
     /**
      * 小卡片放大或大卡片缩小动画.

@@ -25,6 +25,28 @@ class Card(context: Context, row: Int, column: Int) : BaseCard(context, DEF_ELEV
         text = "$row-$column"
     }
 
+    /**
+     * 行.
+     */
+    var row = row
+        private set
+    /**
+     * 列.
+     */
+    var column = column
+        private set
+
+    private fun setIndex(row: Int, column: Int) {
+        if (this.row == row && this.column == column) return
+        this.row = row
+        this.column = column
+        // TODO
+        card16Layout.cards[this.row][this.column] = this
+        card16Layout.layoutCard(this)
+
+        textView.text = "$row-$column"
+    }
+
     init {
         cardFrontView = textView
 
@@ -79,24 +101,6 @@ class Card(context: Context, row: Int, column: Int) : BaseCard(context, DEF_ELEV
                 onEnd = null)
     }
 
-    /**
-     * 行.
-     */
-    var row = row
-        private set
-    /**
-     * 列.
-     */
-    var column = column
-        private set
-
-    private fun setIndex(row: Int, column: Int) {
-        this.row = row
-        this.column = column
-
-        textView.text = "$row-$column"
-    }
-
     //*****************************************************************************************************************
 
     fun animateZoomIn(
@@ -121,144 +125,58 @@ class Card(context: Context, row: Int, column: Int) : BaseCard(context, DEF_ELEV
             onStart = onStart,
             onEnd = onEnd)
 
+    /**
+     * 卡片移动动画.
+     *
+     * @param isHorizontal 水平方向或垂直方向移动.
+     *
+     * @param grid 移动行列数. 不能为 0, 移动后卡片必须在行列范围内.
+     *
+     * @param duration 动画时长.
+     *
+     * @param startDelay 动画延时.
+     *
+     * @param onStart 动画开始回调.
+     *
+     * @param onEnd 动画结束回调.
+     */
+    private fun animateMove(
+            isHorizontal: Boolean,
+            grid: Int,
+            duration: Long,
+            startDelay: Long,
+            onStart: ((Animator) -> Unit)?,
+            onEnd: ((Animator) -> Unit)?): Animator {
+        if (grid == 0) throw EBRuntimeException()
+        val newRow = row + if (isHorizontal) 0 else grid
+        val newColumn = column + if (isHorizontal) grid else 0
+        if (newRow < 0 || newRow >= Card16Layout.GRID || newColumn < 0 || newColumn >= Card16Layout.GRID) {
+            throw EBRuntimeException()
+        }
+        return AnimatorSet().apply {
+            val translationAnimator = ObjectAnimator().apply {
+                propertyName = if (isHorizontal) "translationX" else "translationY"
+                val valueFrom = 0f
+                val valueTo = ((size + card16Layout.spacing) * grid).toFloat()
+                setFloatValues(valueFrom, valueTo)
+                this.duration = duration
+                interpolator = AccelerateDecelerateInterpolator()
+                addListener(CardAnimatorListener(
+                        onStart = onStart,
+                        onEnd = {
+                            setIndex(newRow, newColumn)
+                            if (isHorizontal) translationX = 0f else translationY = 0f
+                            onEnd?.invoke(it)
+                        }))
+            }
+            play(translationAnimator)
+            this.startDelay = startDelay
+            setTarget(this@Card)
+            start()
+        }
+    }
+
     //*****************************************************************************************************************
-
-    /**
-     * 卡片左移动画.
-     *
-     * 开始状态: 位移为 0f.
-     *
-     * 动画过程: 高度加速减速升高, 然后加速减速左移, 然后高度加速减速降低.
-     *
-     * 结束状态: 列减 1, 重置位移.
-     *
-     * @param translateDuration 移动动画时长.
-     */
-    private fun animateMoveLeft(translateDuration: Long) {
-        if (column <= 0) throw EBRuntimeException()
-        AnimatorSet().apply {
-            val translationAnimator = ObjectAnimator().apply {
-                propertyName = "translationX"
-                val valueFrom = 0f
-                val valueTo = -(card16Layout.cardSize.toFloat() + card16Layout.spacing)
-                setFloatValues(valueFrom, valueTo)
-                duration = translateDuration
-                interpolator = AccelerateDecelerateInterpolator()
-            }
-            play(translationAnimator)
-            val animatorListener = CardAnimatorListener(onEnd = {
-                setIndex(row, column - 1)
-                invalidateLayout()
-                translationX = 0f
-            })
-            addListener(animatorListener)
-            setTarget(this@Card)
-        }.start()
-    }
-
-    /**
-     * 卡片右移动画.
-     *
-     * 开始状态: 位移为 0f.
-     *
-     * 动画过程: 高度加速减速升高, 然后加速减速右移, 然后高度加速减速降低.
-     *
-     * 结束状态: 列加 1, 重置位移.
-     *
-     * @param translateDuration 移动动画时长.
-     */
-    private fun animateMoveRight(translateDuration: Long) {
-        if (column >= Card16Layout.GRID - 1) throw EBRuntimeException()
-        AnimatorSet().apply {
-            val translationAnimator = ObjectAnimator().apply {
-                propertyName = "translationX"
-                val valueFrom = 0f
-                val valueTo = card16Layout.cardSize.toFloat() + card16Layout.spacing
-                setFloatValues(valueFrom, valueTo)
-                duration = translateDuration
-                interpolator = AccelerateDecelerateInterpolator()
-            }
-            play(translationAnimator)
-            val animatorListener = CardAnimatorListener(onEnd = {
-                setIndex(row, column + 1)
-                invalidateLayout()
-                translationX = 0f
-            })
-            addListener(animatorListener)
-            setTarget(this@Card)
-        }.start()
-    }
-
-    /**
-     * 卡片上移动画.
-     *
-     * 开始状态: 位移为 0f.
-     *
-     * 动画过程: 高度加速减速升高, 然后加速减速上移, 然后高度加速减速降低.
-     *
-     * 结束状态: 行减 1, 重置位移.
-     *
-     * @param translateDuration 移动动画时长.
-     */
-    private fun animateMoveTop(translateDuration: Long) {
-        if (row <= 0) throw EBRuntimeException()
-        AnimatorSet().apply {
-            val translationAnimator = ObjectAnimator().apply {
-                propertyName = "translationY"
-                val valueFrom = 0f
-                val valueTo = -(card16Layout.cardSize.toFloat() + card16Layout.spacing)
-                setFloatValues(valueFrom, valueTo)
-                duration = translateDuration
-                interpolator = AccelerateDecelerateInterpolator()
-            }
-            play(translationAnimator)
-            val animatorListener = CardAnimatorListener(onEnd = {
-                setIndex(row - 1, column)
-                invalidateLayout()
-                translationY = 0f
-            })
-            addListener(animatorListener)
-            setTarget(this@Card)
-        }.start()
-    }
-
-    /**
-     * 卡片下移动画.
-     *
-     * 开始状态: 位移为 0f.
-     *
-     * 动画过程: 高度加速减速升高, 然后加速减速下移, 然后高度加速减速降低.
-     *
-     * 结束状态: 行加 1, 重置位移.
-     *
-     * @param translateDuration 移动动画时长.
-     */
-    private fun animateMoveBottom(translateDuration: Long) {
-        if (row >= Card16Layout.GRID - 1) throw EBRuntimeException()
-        AnimatorSet().apply {
-            val translationAnimator = ObjectAnimator().apply {
-                propertyName = "translationY"
-                val valueFrom = 0f
-                val valueTo = card16Layout.cardSize.toFloat() + card16Layout.spacing
-                setFloatValues(valueFrom, valueTo)
-                duration = translateDuration
-                interpolator = AccelerateDecelerateInterpolator()
-            }
-            play(translationAnimator)
-            val animatorListener = CardAnimatorListener(onEnd = {
-                setIndex(row + 1, column)
-                invalidateLayout()
-                translationY = 0f
-            })
-            addListener(animatorListener)
-            setTarget(this@Card)
-        }.start()
-    }
-
-    private fun invalidateLayout() {
-        layout(card16Layout.cardLefts[row][column], card16Layout.cardTops[row][column],
-                card16Layout.cardRights[row][column], card16Layout.cardBottoms[row][column])
-    }
 
     companion object {
         /**

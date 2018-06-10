@@ -170,14 +170,18 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         // 布局子视图.
-        cardsIndexed { row, column, card ->
-            card.layout(
-                    cardLefts[row][column],
-                    cardTops[row][column],
-                    cardRights[row][column],
-                    cardBottoms[row][column])
-        }
+        cards { layoutCard(it) }
         bigCard.layout(bigCardLeft, bigCardTop, bigCardRight, bigCardBottom)
+    }
+
+    fun layoutCard(card: Card) {
+        val row = card.row
+        val column = card.column
+        card.layout(
+                cardLefts[row][column],
+                cardTops[row][column],
+                cardRights[row][column],
+                cardBottoms[row][column])
     }
 
     /**
