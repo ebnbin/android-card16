@@ -65,7 +65,8 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
     /**
      * [BigCard] 宽高.
      */
-    private var bigCardSize = 0
+    var bigCardSize = 0
+        private set
 
     /**
      * 左边距.
@@ -100,14 +101,6 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
      * [Card] 下位置.
      */
     val cardBottoms = Array(GRID) { Array(GRID) { 0 } }
-    /**
-     * [Card] 水平方向中心位置.
-     */
-    val cardCenterXs = Array(GRID) { Array(GRID) { 0 } }
-    /**
-     * [Card] 垂直方向中心位置.
-     */
-    val cardCenterYs = Array(GRID) { Array(GRID) { 0 } }
 
     /**
      * [BigCard] 左位置.
@@ -125,27 +118,6 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
      * [BigCard] 下位置.
      */
     private var bigCardBottom = 0
-    /**
-     * [BigCard] 水平方向中心位置.
-     */
-    var bigCardCenterX = 0
-        private set
-    /**
-     * [BigCard] 垂直方向中心位置.
-     */
-    var bigCardCenterY = 0
-        private set
-
-    /**
-     * 从 [Card] 放大到 [BigCard] 比例. 大等于 1f.
-     */
-    var scaleIn = 1f
-        private set
-    /**
-     * 从 [BigCard] 缩小到 [Card] 比例. 小等于 1f.
-     */
-    var scaleOut = 1f
-        private set
 
     /**
      * [Card] 测量宽高.
@@ -178,23 +150,15 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
                 val cardTop = spacingTop + row * (cardSize + spacing)
                 val cardRight = cardLeft + cardSize
                 val cardBottom = cardTop + cardSize
-                val cardCenterX = (cardLeft + cardRight) / 2
-                val cardCenterY = (cardTop + cardBottom) / 2
                 cardLefts[row][column] = cardLeft
                 cardTops[row][column] = cardTop
                 cardRights[row][column] = cardRight
                 cardBottoms[row][column] = cardBottom
-                cardCenterXs[row][column] = cardCenterX
-                cardCenterYs[row][column] = cardCenterY
             }
             bigCardLeft = spacingLeft
             bigCardTop = spacingTop
             bigCardRight = bigCardLeft + bigCardSize
             bigCardBottom = bigCardTop + bigCardSize
-            bigCardCenterX = (bigCardLeft + bigCardRight) / 2
-            bigCardCenterY = (bigCardTop + bigCardBottom) / 2
-            scaleIn = if (cardSize == 0 || bigCardSize == 0) 1f else bigCardSize.toFloat() / cardSize
-            scaleOut = 1f / scaleIn
             cardMeasureSpec = MeasureSpec.makeMeasureSpec(cardSize, MeasureSpec.EXACTLY)
             bigCardMeasureSpec = MeasureSpec.makeMeasureSpec(bigCardSize, MeasureSpec.EXACTLY)
         }

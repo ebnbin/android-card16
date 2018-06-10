@@ -11,6 +11,8 @@ import android.view.View
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
+import com.ebnbin.eb.view.centerX
+import com.ebnbin.eb.view.centerY
 
 /**
  * 基础卡片.
@@ -32,6 +34,11 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
     }
 
     protected val card16Layout get() = parent as Card16Layout
+
+    /**
+     * 卡片大小. 与宽, 高相同.
+     */
+    protected val size get() = width
 
     //*****************************************************************************************************************
     // 卡片正反面.
@@ -114,19 +121,30 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
      * @param isClockwise 从上往下或从左往右视角, 顺时针或逆时针翻转.
      *
      * @param hasCardBack 翻转动画是否显示卡片反面.
+     *
+     * @param shouldHide 当翻转动画显示卡片反面时, 是否从卡片不可见的角度开始或到卡片不可见的角度结束.
      */
     protected fun rotationAnimator(
             isIn: Boolean,
             isHorizontal: Boolean,
             isClockwise: Boolean,
-            hasCardBack: Boolean) = ObjectAnimator().apply {
+            hasCardBack: Boolean,
+            shouldHide: Boolean) = ObjectAnimator().apply {
         propertyName = if (isHorizontal) "rotationY" else "rotationX"
-        val degree = if (hasCardBack) 270f else 90f
+        val degree = if (hasCardBack) if (shouldHide) 270f else 180f else 90f
         val valueFrom = if (isIn) (if (isClockwise) 1 else -1) * degree else 0f
         val valueTo = if (isIn) 0f else (if (isClockwise) -1 else 1) * degree
         setFloatValues(valueFrom, valueTo)
         interpolator = if (isIn) DecelerateInterpolator() else AccelerateInterpolator()
         addUpdateListener(CardFrontBackAnimatorUpdateListener())
+    }
+
+    // TODO
+    protected fun rootAnimatorSet(animator: Animator, startDelay: Long) = AnimatorSet().apply {
+        play(animator)
+        this.startDelay = startDelay
+        setTarget(this@BaseCard)
+        start()
     }
 
     //*****************************************************************************************************************
@@ -161,7 +179,7 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
             startDelay: Long,
             onStart: ((Animator) -> Unit)?,
             onEnd: ((Animator) -> Unit)?): Animator =
-            rotationAnimator(isIn, isHorizontal, isClockwise, hasCardBack).apply {
+            rotationAnimator(isIn, isHorizontal, isClockwise, hasCardBack, true).apply {
                 this.duration = duration
                 this.startDelay = startDelay
                 addListener(CardAnimatorListener(onStart, onEnd))
@@ -200,17 +218,17 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
             onStart: ((Animator) -> Unit)?,
             onEnd: ((Animator) -> Unit)?): Animator =
             AnimatorSet().apply {
-                val rotationOutAnimator = rotationAnimator(false, isHorizontal, isClockwise, hasCardBack).apply {
+                val rotationOutAnimator = rotationAnimator(false, isHorizontal, isClockwise, hasCardBack,
+                        false).apply {
                     this.duration = duration / 2L
                 }
-                val rotationInAnimator = rotationAnimator(true, isHorizontal, isClockwise, hasCardBack).apply {
+                val rotationInAnimator = rotationAnimator(true, isHorizontal, isClockwise, hasCardBack, false).apply {
                     this.duration = duration - duration / 2L
                     addListener(object : AnimatorListenerAdapter() {
                         override fun onAnimationStart(animation: Animator?) {
                             super.onAnimationStart(animation)
 
-                            onCut ?: return
-                            cardFrontView = onCut()
+                            if (onCut != null) cardFrontView = onCut()
                         }
                     })
                 }
@@ -220,6 +238,176 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
                 setTarget(this@BaseCard)
                 start()
             }
+
+    /**
+     * 小卡片放大或大卡片缩小动画.
+     *
+     * @param isBigCard 大卡片或小卡片.
+     *
+     * @param isIn 放大或缩小.
+     *
+     * @param row 行.
+     *
+     * @param column 列.
+     *
+     * @param isHorizontal 水平方向或垂直方向翻转.
+     *
+     * @param isClockwise 从上往下或从左往右视角, 顺时针或逆时针翻转.
+     *
+     * @param hasCardBack 翻转动画是否显示卡片反面.
+     *
+     * @param duration 动画时长.
+     *
+     * @param startDelay 动画延时.
+     *
+     * @param onCut 卡片切换回调. 返回新的卡片正面视图.
+     *
+     * @param onStart 动画开始回调.
+     *
+     * @param onEnd 动画结束回调.
+     */
+    protected fun internalAnimateZoomInOut(
+            isBigCard: Boolean,
+            isIn: Boolean,
+            row: Int,
+            column: Int,
+            isHorizontal: Boolean,
+            isClockwise: Boolean,
+            hasCardBack: Boolean,
+            duration: Long,
+            startDelay: Long?,
+            onCut: (() -> View)?,
+            onStart: ((Animator) -> Unit)?,
+            onEnd: ((Animator) -> Unit)?):
+            Animator = AnimatorSet().apply {
+        // 大卡片的 in 是出现 out 是消失, 小卡片的 in 是消失 out 是出现.
+        val isRealIn = isBigCard == isIn
+
+        val card = card16Layout.cards[row][column]
+        val bigCard = card16Layout.bigCard
+        val animatorSet = AnimatorSet().apply {
+            val rotationAnimator = rotationAnimator(isRealIn, isHorizontal, isClockwise, hasCardBack, false)
+            val translationXAnimator = ObjectAnimator().apply {
+                propertyName = "translationX"
+                val cardCenter = card.centerX
+                val bigCardCenter = bigCard.centerX
+                val translation = if (isBigCard) cardCenter - bigCardCenter else bigCardCenter - cardCenter
+                val halfTranslation = translation / 2f
+                val valueFrom = if (isRealIn) halfTranslation else 0f
+                val valueTo = if (isRealIn) 0f else halfTranslation
+                setFloatValues(valueFrom, valueTo)
+            }
+            val translationYAnimator = ObjectAnimator().apply {
+                propertyName = "translationY"
+                val cardCenter = card.centerY
+                val bigCardCenter = bigCard.centerY
+                val translation = if (isBigCard) cardCenter - bigCardCenter else bigCardCenter - cardCenter
+                val halfTranslation = translation / 2f
+                val valueFrom = if (isRealIn) halfTranslation else 0f
+                val valueTo = if (isRealIn) 0f else halfTranslation
+                setFloatValues(valueFrom, valueTo)
+            }
+            val scale = if (isBigCard) card.size.toFloat() / bigCard.size else bigCard.size.toFloat() / card.size
+            val halfScale = (1f + scale) / 2f
+            val scaleValueFrom = if (isRealIn) halfScale else 1f
+            val scaleValueTo = if (isRealIn) 1f else halfScale
+            val scaleXAnimator = ObjectAnimator().apply {
+                propertyName = "scaleX"
+                setFloatValues(scaleValueFrom, scaleValueTo)
+            }
+            val scaleYAnimator = ObjectAnimator().apply {
+                propertyName = "scaleY"
+                setFloatValues(scaleValueFrom, scaleValueTo)
+            }
+            val radiusAnimator = ObjectAnimator().apply {
+                propertyName = "radius"
+                val cardRadius = card.defRadius
+                val bigCardRadius = bigCard.defRadius
+                val radius = if (isBigCard) bigCardRadius else cardRadius
+                val halfRadius = (cardRadius + bigCardRadius) / 2f
+                val valueFrom = if (isRealIn) halfRadius else radius
+                val valueTo = if (isRealIn) radius else halfRadius
+                setFloatValues(valueFrom, valueTo)
+            }
+            val elevationAnimator = ObjectAnimator().apply {
+                propertyName = "elevation"
+                val cardElevation = card.animateElevation
+                val bigCardElevation = bigCard.animateElevation
+                val elevation = if (isBigCard) bigCardElevation else cardElevation
+                val halfElevation = (cardElevation + bigCardElevation) / 2f
+                val valueFrom = if (isRealIn) halfElevation else elevation
+                val valueTo = if (isRealIn) elevation else halfElevation
+                setFloatValues(valueFrom, valueTo)
+            }
+            playTogether(rotationAnimator, translationXAnimator, translationYAnimator, scaleXAnimator, scaleYAnimator,
+                    radiusAnimator, elevationAnimator)
+            interpolator = if (isRealIn) DecelerateInterpolator() else AccelerateInterpolator()
+            this.duration = if (isRealIn) duration - duration / 2L else duration / 2L
+            addListener(CardAnimatorListener(
+                    onStart = {
+                        if (isBigCard) {
+                            if (isIn) {
+                                if (onCut != null) bigCard.cardFrontView = onCut()
+                            } else {
+                                card16Layout.cards(row, column) { it.visibility = View.VISIBLE }
+                                onStart?.invoke(it)
+                            }
+                        } else {
+                            if (isIn) {
+                                onStart?.invoke(it)
+                            } else {
+                                if (onCut != null) card.cardFrontView = onCut()
+                            }
+                        }
+                    },
+                    onEnd = {
+                        if (isBigCard) {
+                            if (isIn) {
+                                card16Layout.cards(row, column) { it.visibility = View.GONE }
+                                onEnd?.invoke(it)
+                            } else {
+                                bigCard.visibility = View.GONE
+                                card.internalAnimateZoomInOut(
+                                        isBigCard = false,
+                                        isIn = false,
+                                        row = row,
+                                        column = column,
+                                        isHorizontal = isHorizontal,
+                                        isClockwise = isClockwise,
+                                        hasCardBack = hasCardBack,
+                                        duration = duration,
+                                        startDelay = null,
+                                        onCut = onCut,
+                                        onStart = null,
+                                        onEnd = onEnd)
+                            }
+                        } else {
+                            if (isIn) {
+                                card.visibility = View.GONE
+                                bigCard.internalAnimateZoomInOut(
+                                        isBigCard = true,
+                                        isIn = true,
+                                        row = row,
+                                        column = column,
+                                        isHorizontal = isHorizontal,
+                                        isClockwise = isClockwise,
+                                        hasCardBack = hasCardBack,
+                                        duration = duration,
+                                        startDelay = null,
+                                        onCut = onCut,
+                                        onStart = null,
+                                        onEnd = onEnd)
+                            } else {
+                                onEnd?.invoke(it)
+                            }
+                        }
+                    }))
+        }
+        play(animatorSet)
+        this.startDelay = if (isRealIn) 0L else startDelay ?: 0L
+        setTarget(this@BaseCard)
+        start()
+    }
 
     //*****************************************************************************************************************
 
