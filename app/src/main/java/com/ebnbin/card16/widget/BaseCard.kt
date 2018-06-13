@@ -435,6 +435,11 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
             removeAllListeners(animation)
 
             elevation = defElevation
+            radius = defRadius
+            translationX = 0f
+            translationY = 0f
+            scaleX = 1f
+            scaleY = 1f
 
             // TODO
             card16Layout.cards { it.isClickable = true }

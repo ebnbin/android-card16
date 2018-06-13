@@ -15,36 +15,15 @@ import com.ebnbin.eb.util.dp
 /**
  * 卡片.
  *
- * @param row 初始化行.
+ * @param row 行.
  *
- * @param column 初始化列.
+ * @param column 列.
  */
 @SuppressLint("ViewConstructor")
-class Card(context: Context, row: Int, column: Int) : BaseCard(context, DEF_ELEVATION_DP.dp, DEF_RADIUS_DP.dp) {
+class Card(context: Context, val row: Int, val column: Int) :
+        BaseCard(context, DEF_ELEVATION_DP.dp, DEF_RADIUS_DP.dp) {
     private val textView = TextView(this.context).apply {
         text = "$row-$column"
-    }
-
-    /**
-     * 行.
-     */
-    var row = row
-        private set
-    /**
-     * 列.
-     */
-    var column = column
-        private set
-
-    private fun setIndex(row: Int, column: Int) {
-        if (this.row == row && this.column == column) return
-        this.row = row
-        this.column = column
-        // TODO
-        card16Layout.cards[this.row][this.column] = this
-        card16Layout.layoutCard(this)
-
-        textView.text = "$row-$column"
     }
 
     init {
@@ -164,8 +143,8 @@ class Card(context: Context, row: Int, column: Int) : BaseCard(context, DEF_ELEV
                 addListener(CardAnimatorListener(
                         onStart = onStart,
                         onEnd = {
-                            setIndex(newRow, newColumn)
-                            if (isHorizontal) translationX = 0f else translationY = 0f
+                            card16Layout.cards[newRow][newColumn].visibility = View.VISIBLE
+                            visibility = View.GONE
                             onEnd?.invoke(it)
                         }))
             }
