@@ -7,7 +7,9 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
-import android.widget.TextView
+import com.ebnbin.card16.card.Card
+import com.ebnbin.card16.card.IndexCard
+import com.ebnbin.card16.card.NewCard
 import com.ebnbin.eb.util.EBRuntimeException
 import com.ebnbin.eb.util.RandomHelper
 import com.ebnbin.eb.util.dp
@@ -22,13 +24,11 @@ import com.ebnbin.eb.util.dp
 @SuppressLint("ViewConstructor")
 class CardView(context: Context, val row: Int, val column: Int) :
         BaseCardView(context, DEF_ELEVATION_DP.dp, DEF_RADIUS_DP.dp) {
-    private val textView = TextView(this.context).apply {
-        text = "$row-$column"
-    }
+    override fun getCardFrontView(card: Card) = card.getFrontView()
+
+    override fun getCardBackView(card: Card) = card.getBackView()
 
     init {
-        cardFrontView = textView
-
         setOnClickListener {
             if (row % 2 == column % 2) {
                 animateZoomIn(
@@ -64,7 +64,8 @@ class CardView(context: Context, val row: Int, val column: Int) :
                         startDelay = 0L,
                         onCut = null,
                         onStart = null,
-                        onEnd = null)
+                        onEnd = null,
+                        card = NewCard(this.context))
             }
         }
 
@@ -77,7 +78,10 @@ class CardView(context: Context, val row: Int, val column: Int) :
                 duration = RandomHelper.nextLong(450L, 1200L),
                 startDelay = RandomHelper.nextLong(0L, 1000L),
                 onStart = null,
-                onEnd = null)
+                onEnd = null,
+                card = IndexCard(context).apply {
+                    setIndex(row, column)
+                })
     }
 
     //*****************************************************************************************************************
@@ -88,7 +92,7 @@ class CardView(context: Context, val row: Int, val column: Int) :
             hasCardBack: Boolean,
             duration: Long,
             startDelay: Long,
-            onCut: (() -> View)?,
+            onCut: (() -> Unit)?,
             onStart: ((Animator) -> Unit)?,
             onEnd: ((Animator) -> Unit)?) = internalAnimateZoomInOut(
             isBigCard = false,

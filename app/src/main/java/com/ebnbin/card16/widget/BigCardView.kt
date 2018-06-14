@@ -2,18 +2,31 @@ package com.ebnbin.card16.widget
 
 import android.animation.Animator
 import android.content.Context
-import android.view.View
-import android.widget.TextView
+import com.ebnbin.card16.card.Card
+import com.ebnbin.card16.card.NewCard
 import com.ebnbin.eb.util.dp
 
 /**
  * 大卡片.
  */
 class BigCardView(context: Context) : BaseCardView(context, DEF_ELEVATION_DP.dp, DEF_RADIUS_DP.dp) {
-    // TODO
+    override fun getCardFrontView(card: Card) = card.getBigFrontView()
+
+    override fun getCardBackView(card: Card) = card.getBigBackView()
+
     init {
-        cardFrontView = TextView(this.context).apply {
-            text = "BigCardView"
+        setOnLongClickListener {
+            animateCut(
+                    isHorizontal = true,
+                    isClockwise = false,
+                    hasCardBack = false,
+                    duration = 300L,
+                    startDelay = 0L,
+                    onCut = null,
+                    onStart = null,
+                    onEnd = null,
+                    card = NewCard(this.context))
+            true
         }
     }
 
@@ -27,7 +40,7 @@ class BigCardView(context: Context) : BaseCardView(context, DEF_ELEVATION_DP.dp,
             hasCardBack: Boolean,
             duration: Long,
             startDelay: Long,
-            onCut: (() -> View)?,
+            onCut: (() -> Unit)?,
             onStart: ((Animator) -> Unit)?,
             onEnd: ((Animator) -> Unit)?) = internalAnimateZoomInOut(
             isBigCard = true,

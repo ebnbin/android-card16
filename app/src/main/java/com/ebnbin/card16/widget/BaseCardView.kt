@@ -10,6 +10,7 @@ import android.view.View
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
+import com.ebnbin.card16.card.Card
 import com.ebnbin.eb.view.centerX
 import com.ebnbin.eb.view.centerY
 
@@ -70,29 +71,21 @@ abstract class BaseCardView(context: Context, val defElevation: Float, val defRa
             cardBackRootView.visibility = if (field) View.GONE else View.VISIBLE
         }
 
-    /**
-     * 卡片正面视图.
-     */
-    protected var cardFrontView: View? = null
+    protected var card: Card? = null
         set(value) {
             if (field === value) return
             field = value
             cardFrontRootView.removeAllViews()
-            if (field == null) return
-            cardFrontRootView.addView(field)
+            cardBackRootView.removeAllViews()
+            value ?: return
+            val cardFrontView = getCardFrontView(value)
+            if (cardFrontView != null) cardFrontRootView.addView(cardFrontView)
+            val cardBackView = getCardBackView(value)
+            if (cardBackView != null) cardBackRootView.addView(cardBackView)
         }
 
-    /**
-     * 卡片反面视图.
-     */
-    protected var cardBackView: View? = null
-        set(value) {
-            if (field === value) return
-            field = value
-            cardBackRootView.removeAllViews()
-            if (field == null) return
-            cardBackRootView.addView(field)
-        }
+    protected abstract fun getCardFrontView(card: com.ebnbin.card16.card.Card): View?
+    protected abstract fun getCardBackView(card: com.ebnbin.card16.card.Card): View?
 
     /**
      * 翻转动画更新监听器. 监听卡片正反面改变.
@@ -170,11 +163,17 @@ abstract class BaseCardView(context: Context, val defElevation: Float, val defRa
             duration: Long,
             startDelay: Long,
             onStart: ((Animator) -> Unit)?,
-            onEnd: ((Animator) -> Unit)?):
+            onEnd: ((Animator) -> Unit)?,
+            card: Card?):
             Animator = AnimatorSet().apply {
         val rotationAnimator = rotationAnimator(isIn, isHorizontal, isClockwise, hasCardBack, true).apply {
             this.duration = duration
-            addListener(CardAnimatorListener(onStart, onEnd))
+            addListener(CardAnimatorListener(
+                    onStart = {
+                        if (isIn) this@BaseCardView.card = card
+                        onStart?.invoke(it)
+                    },
+                    onEnd = onEnd))
         }
         play(rotationAnimator)
         this.startDelay = startDelay
@@ -209,9 +208,10 @@ abstract class BaseCardView(context: Context, val defElevation: Float, val defRa
             hasCardBack: Boolean,
             duration: Long,
             startDelay: Long,
-            onCut: (() -> View)?,
+            onCut: (() -> Unit)?,
             onStart: ((Animator) -> Unit)?,
-            onEnd: ((Animator) -> Unit)?):
+            onEnd: ((Animator) -> Unit)?,
+            card: Card?):
             Animator = AnimatorSet().apply {
         val animatorSet = AnimatorSet().apply {
             val rotationOutAnimator = rotationAnimator(false, isHorizontal, isClockwise, hasCardBack,
@@ -224,7 +224,8 @@ abstract class BaseCardView(context: Context, val defElevation: Float, val defRa
                     override fun onAnimationStart(animation: Animator?) {
                         super.onAnimationStart(animation)
 
-                        if (onCut != null) cardFrontView = onCut()
+                        this@BaseCardView.card = card
+                        onCut?.invoke()
                     }
                 })
             }
@@ -274,7 +275,7 @@ abstract class BaseCardView(context: Context, val defElevation: Float, val defRa
             hasCardBack: Boolean,
             duration: Long,
             startDelay: Long?,
-            onCut: (() -> View)?,
+            onCut: (() -> Unit)?,
             onStart: ((Animator) -> Unit)?,
             onEnd: ((Animator) -> Unit)?):
             Animator = AnimatorSet().apply {
@@ -348,7 +349,8 @@ abstract class BaseCardView(context: Context, val defElevation: Float, val defRa
                     onStart = {
                         if (isBigCard) {
                             if (isIn) {
-                                if (onCut != null) bigCardView.cardFrontView = onCut()
+                                bigCardView.card = cardView.card
+                                onCut?.invoke()
                             } else {
                                 card16Layout.cardViews(row, column) { it.visibility = View.VISIBLE }
                                 onStart?.invoke(it)
@@ -357,7 +359,9 @@ abstract class BaseCardView(context: Context, val defElevation: Float, val defRa
                             if (isIn) {
                                 onStart?.invoke(it)
                             } else {
-                                if (onCut != null) cardView.cardFrontView = onCut()
+                                cardView.card = bigCardView.card
+                                bigCardView.card = null
+                                onCut?.invoke()
                             }
                         }
                     },
