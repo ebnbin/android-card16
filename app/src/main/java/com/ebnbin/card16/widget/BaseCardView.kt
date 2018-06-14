@@ -84,8 +84,8 @@ abstract class BaseCardView(context: Context, val defElevation: Float, val defRa
             if (cardBackView != null) cardBackRootView.addView(cardBackView)
         }
 
-    protected abstract fun getCardFrontView(card: com.ebnbin.card16.card.Card): View?
-    protected abstract fun getCardBackView(card: com.ebnbin.card16.card.Card): View?
+    protected abstract fun getCardFrontView(card: Card): View?
+    protected abstract fun getCardBackView(card: Card): View?
 
     /**
      * 翻转动画更新监听器. 监听卡片正反面改变.

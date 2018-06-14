@@ -8,8 +8,7 @@ import android.content.Context
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import com.ebnbin.card16.card.Card
-import com.ebnbin.card16.card.IndexCard
-import com.ebnbin.card16.card.NewCard
+import com.ebnbin.card16.card.CharCard
 import com.ebnbin.eb.util.EBRuntimeException
 import com.ebnbin.eb.util.RandomHelper
 import com.ebnbin.eb.util.dp
@@ -65,7 +64,7 @@ class CardView(context: Context, val row: Int, val column: Int) :
                         onCut = null,
                         onStart = null,
                         onEnd = null,
-                        card = NewCard(this.context))
+                        card = this.card)
             }
         }
 
@@ -79,8 +78,17 @@ class CardView(context: Context, val row: Int, val column: Int) :
                 startDelay = RandomHelper.nextLong(0L, 1000L),
                 onStart = null,
                 onEnd = null,
-                card = IndexCard(context).apply {
-                    setIndex(row, column)
+                card = run {
+                    if (row == 1 && column == 0) CharCard(context).apply { setChar('C') }
+                    else if (row == 1 && column == 1) CharCard(context).apply { setChar('A') }
+                    else if (row == 1 && column == 2) CharCard(context).apply { setChar('R') }
+                    else if (row == 1 && column == 3) CharCard(context).apply { setChar('D') }
+                    else if (row == 2 && column == 1) CharCard(context).apply { setChar('1') }
+                    else if (row == 2 && column == 2) CharCard(context).apply { setChar('6') }
+                    else null
+//                    IndexCard(context).apply {
+//                        setIndex(row, column)
+//                    }
                 })
     }
 
