@@ -6,7 +6,6 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.content.Context
-import android.support.v7.widget.CardView
 import android.view.View
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
@@ -21,7 +20,8 @@ import com.ebnbin.eb.view.centerY
  *
  * @param defRadius 默认圆角.
  */
-abstract class BaseCard(context: Context, val defElevation: Float, val defRadius: Float) : CardView(context) {
+abstract class BaseCardView(context: Context, val defElevation: Float, val defRadius: Float) :
+        android.support.v7.widget.CardView(context) {
     /**
      * 动画时的高度.
      */
@@ -47,7 +47,7 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
      * 卡片正面根视图.
      */
     private val cardFrontRootView = FrameLayout(this.context).apply {
-        this@BaseCard.addView(this)
+        this@BaseCardView.addView(this)
         visibility = View.VISIBLE
     }
 
@@ -55,7 +55,7 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
      * 卡片反面根视图.
      */
     private val cardBackRootView = FrameLayout(this.context).apply {
-        this@BaseCard.addView(this)
+        this@BaseCardView.addView(this)
         visibility = View.GONE
     }
 
@@ -178,7 +178,7 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
         }
         play(rotationAnimator)
         this.startDelay = startDelay
-        setTarget(this@BaseCard)
+        setTarget(this@BaseCardView)
         start()
     }
 
@@ -233,7 +233,7 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
         }
         play(animatorSet)
         this.startDelay = startDelay
-        setTarget(this@BaseCard)
+        setTarget(this@BaseCardView)
         start()
     }
 
@@ -281,14 +281,14 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
         // 大卡片的 in 是出现 out 是消失, 小卡片的 in 是消失 out 是出现.
         val isRealIn = isBigCard == isIn
 
-        val card = card16Layout.cards[row][column]
-        val bigCard = card16Layout.bigCard
+        val cardView = card16Layout.cardViews[row][column]
+        val bigCardView = card16Layout.bigCardView
         val animatorSet = AnimatorSet().apply {
             val rotationAnimator = rotationAnimator(isRealIn, isHorizontal, isClockwise, hasCardBack, false)
             val translationXAnimator = ObjectAnimator().apply {
                 propertyName = "translationX"
-                val cardCenter = card.centerX
-                val bigCardCenter = bigCard.centerX
+                val cardCenter = cardView.centerX
+                val bigCardCenter = bigCardView.centerX
                 val translation = if (isBigCard) cardCenter - bigCardCenter else bigCardCenter - cardCenter
                 val halfTranslation = translation / 2f
                 val valueFrom = if (isRealIn) halfTranslation else 0f
@@ -297,15 +297,18 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
             }
             val translationYAnimator = ObjectAnimator().apply {
                 propertyName = "translationY"
-                val cardCenter = card.centerY
-                val bigCardCenter = bigCard.centerY
+                val cardCenter = cardView.centerY
+                val bigCardCenter = bigCardView.centerY
                 val translation = if (isBigCard) cardCenter - bigCardCenter else bigCardCenter - cardCenter
                 val halfTranslation = translation / 2f
                 val valueFrom = if (isRealIn) halfTranslation else 0f
                 val valueTo = if (isRealIn) 0f else halfTranslation
                 setFloatValues(valueFrom, valueTo)
             }
-            val scale = if (isBigCard) card.size.toFloat() / bigCard.size else bigCard.size.toFloat() / card.size
+            val scale = if (isBigCard)
+                cardView.size.toFloat() / bigCardView.size
+            else
+                bigCardView.size.toFloat() / cardView.size
             val halfScale = (1f + scale) / 2f
             val scaleValueFrom = if (isRealIn) halfScale else 1f
             val scaleValueTo = if (isRealIn) 1f else halfScale
@@ -319,8 +322,8 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
             }
             val radiusAnimator = ObjectAnimator().apply {
                 propertyName = "radius"
-                val cardRadius = card.defRadius
-                val bigCardRadius = bigCard.defRadius
+                val cardRadius = cardView.defRadius
+                val bigCardRadius = bigCardView.defRadius
                 val radius = if (isBigCard) bigCardRadius else cardRadius
                 val halfRadius = (cardRadius + bigCardRadius) / 2f
                 val valueFrom = if (isRealIn) halfRadius else radius
@@ -329,8 +332,8 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
             }
             val elevationAnimator = ObjectAnimator().apply {
                 propertyName = "elevation"
-                val cardElevation = card.animateElevation
-                val bigCardElevation = bigCard.animateElevation
+                val cardElevation = cardView.animateElevation
+                val bigCardElevation = bigCardView.animateElevation
                 val elevation = if (isBigCard) bigCardElevation else cardElevation
                 val halfElevation = (cardElevation + bigCardElevation) / 2f
                 val valueFrom = if (isRealIn) halfElevation else elevation
@@ -345,27 +348,27 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
                     onStart = {
                         if (isBigCard) {
                             if (isIn) {
-                                if (onCut != null) bigCard.cardFrontView = onCut()
+                                if (onCut != null) bigCardView.cardFrontView = onCut()
                             } else {
-                                card16Layout.cards(row, column) { it.visibility = View.VISIBLE }
+                                card16Layout.cardViews(row, column) { it.visibility = View.VISIBLE }
                                 onStart?.invoke(it)
                             }
                         } else {
                             if (isIn) {
                                 onStart?.invoke(it)
                             } else {
-                                if (onCut != null) card.cardFrontView = onCut()
+                                if (onCut != null) cardView.cardFrontView = onCut()
                             }
                         }
                     },
                     onEnd = {
                         if (isBigCard) {
                             if (isIn) {
-                                card16Layout.cards(row, column) { it.visibility = View.GONE }
+                                card16Layout.cardViews(row, column) { it.visibility = View.GONE }
                                 onEnd?.invoke(it)
                             } else {
-                                bigCard.visibility = View.GONE
-                                card.internalAnimateZoomInOut(
+                                bigCardView.visibility = View.GONE
+                                cardView.internalAnimateZoomInOut(
                                         isBigCard = false,
                                         isIn = false,
                                         row = row,
@@ -381,8 +384,8 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
                             }
                         } else {
                             if (isIn) {
-                                card.visibility = View.GONE
-                                bigCard.internalAnimateZoomInOut(
+                                cardView.visibility = View.GONE
+                                bigCardView.internalAnimateZoomInOut(
                                         isBigCard = true,
                                         isIn = true,
                                         row = row,
@@ -403,7 +406,7 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
         }
         play(animatorSet)
         this.startDelay = if (isRealIn) 0L else startDelay ?: 0L
-        setTarget(this@BaseCard)
+        setTarget(this@BaseCardView)
         start()
     }
 
@@ -421,8 +424,8 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
             elevation = animateElevation
 
             // TODO
-            card16Layout.cards { it.isClickable = false }
-            card16Layout.bigCard.isClickable = false
+            card16Layout.cardViews { it.isClickable = false }
+            card16Layout.bigCardView.isClickable = false
 
             visibility = View.VISIBLE
 
@@ -442,8 +445,8 @@ abstract class BaseCard(context: Context, val defElevation: Float, val defRadius
             scaleY = 1f
 
             // TODO
-            card16Layout.cards { it.isClickable = true }
-            card16Layout.bigCard.isClickable = true
+            card16Layout.cardViews { it.isClickable = true }
+            card16Layout.bigCardView.isClickable = true
 
             onEnd?.invoke(animation)
         }

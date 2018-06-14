@@ -20,8 +20,8 @@ import com.ebnbin.eb.util.dp
  * @param column 列.
  */
 @SuppressLint("ViewConstructor")
-class Card(context: Context, val row: Int, val column: Int) :
-        BaseCard(context, DEF_ELEVATION_DP.dp, DEF_RADIUS_DP.dp) {
+class CardView(context: Context, val row: Int, val column: Int) :
+        BaseCardView(context, DEF_ELEVATION_DP.dp, DEF_RADIUS_DP.dp) {
     private val textView = TextView(this.context).apply {
         text = "$row-$column"
     }
@@ -40,9 +40,9 @@ class Card(context: Context, val row: Int, val column: Int) :
                         onCut = null,
                         onStart = null,
                         onEnd = {
-                            card16Layout.bigCard.setOnClickListener {
-                                card16Layout.bigCard.setOnClickListener(null)
-                                card16Layout.bigCard.animateZoomOut(
+                            card16Layout.bigCardView.setOnClickListener {
+                                card16Layout.bigCardView.setOnClickListener(null)
+                                card16Layout.bigCardView.animateZoomOut(
                                         row = row,
                                         column = column,
                                         isHorizontal = false,
@@ -143,14 +143,14 @@ class Card(context: Context, val row: Int, val column: Int) :
                 addListener(CardAnimatorListener(
                         onStart = onStart,
                         onEnd = {
-                            card16Layout.cards[newRow][newColumn].visibility = View.VISIBLE
+                            card16Layout.cardViews[newRow][newColumn].visibility = View.VISIBLE
                             visibility = View.GONE
                             onEnd?.invoke(it)
                         }))
             }
             play(translationAnimator)
             this.startDelay = startDelay
-            setTarget(this@Card)
+            setTarget(this@CardView)
             start()
         }
     }

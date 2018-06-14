@@ -9,7 +9,7 @@ import kotlin.math.min
 /**
  * 16 卡片布局.
  *
- * 包含 16 个 [Card] 和 1 个 [BigCard].
+ * 包含 16 个 [CardView] 和 1 个 [BigCardView].
  *
  * 不要设置 padding.
  */
@@ -18,9 +18,9 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
     /**
      * 16 张卡片.
      */
-    val cards = Array(GRID) { row ->
+    val cardViews = Array(GRID) { row ->
         Array(GRID) { column ->
-            Card(this.context, row, column).apply {
+            CardView(this.context, row, column).apply {
                 this@Card16Layout.addView(this)
             }
         }
@@ -29,7 +29,7 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
     /**
      * 大卡片.
      */
-    val bigCard = BigCard(this.context).apply {
+    val bigCardView = BigCardView(this.context).apply {
         this@Card16Layout.addView(this)
     }
 
@@ -57,15 +57,15 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
     private var size = 0
 
     /**
-     * [Card] 宽高.
+     * [CardView] 宽高.
      */
-    var cardSize = 0
+    var cardViewSize = 0
         private set
 
     /**
-     * [BigCard] 宽高.
+     * [BigCardView] 宽高.
      */
-    var bigCardSize = 0
+    var bigCardViewSize = 0
         private set
 
     /**
@@ -86,48 +86,48 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
     private var spacingBottom = 0
 
     /**
-     * [Card] 左位置.
+     * [CardView] 左位置.
      */
-    val cardLefts = Array(GRID) { Array(GRID) { 0 } }
+    val cardViewLefts = Array(GRID) { Array(GRID) { 0 } }
     /**
-     * [Card] 上位置.
+     * [CardView] 上位置.
      */
-    val cardTops = Array(GRID) { Array(GRID) { 0 } }
+    val cardViewTops = Array(GRID) { Array(GRID) { 0 } }
     /**
-     * [Card] 右位置.
+     * [CardView] 右位置.
      */
-    val cardRights = Array(GRID) { Array(GRID) { 0 } }
+    val cardViewRights = Array(GRID) { Array(GRID) { 0 } }
     /**
-     * [Card] 下位置.
+     * [CardView] 下位置.
      */
-    val cardBottoms = Array(GRID) { Array(GRID) { 0 } }
+    val cardViewBottoms = Array(GRID) { Array(GRID) { 0 } }
 
     /**
-     * [BigCard] 左位置.
+     * [BigCardView] 左位置.
      */
-    private var bigCardLeft = 0
+    private var bigCardViewLeft = 0
     /**
-     * [BigCard] 上位置.
+     * [BigCardView] 上位置.
      */
-    private var bigCardTop = 0
+    private var bigCardViewTop = 0
     /**
-     * [BigCard] 右位置.
+     * [BigCardView] 右位置.
      */
-    private var bigCardRight = 0
+    private var bigCardViewRight = 0
     /**
-     * [BigCard] 下位置.
+     * [BigCardView] 下位置.
      */
-    private var bigCardBottom = 0
+    private var bigCardViewBottom = 0
 
     /**
-     * [Card] 测量宽高.
+     * [CardView] 测量宽高.
      */
-    private var cardMeasureSpec = 0
+    private var cardViewMeasureSpec = 0
 
     /**
-     * [BigCard] 测量宽高.
+     * [BigCardView] 测量宽高.
      */
-    private var bigCardMeasureSpec = 0
+    private var bigCardViewMeasureSpec = 0
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
@@ -139,49 +139,45 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
             widthMeasureSpecSize = newWidthMeasureSpecSize
             heightMeasureSpecSize = newHeightMeasureSpecSize
             size = min(widthMeasureSpecSize, heightMeasureSpecSize)
-            cardSize = (size - 2 * edgeSpacing - (GRID - 1) * spacing) / GRID
-            bigCardSize = GRID * cardSize + (GRID - 1) * spacing
-            spacingLeft = (widthMeasureSpecSize - bigCardSize) / 2
-            spacingRight = widthMeasureSpecSize - spacingLeft - bigCardSize
-            spacingTop = (heightMeasureSpecSize - bigCardSize) / 2
-            spacingBottom = heightMeasureSpecSize - spacingTop - bigCardSize
-            cardIndexes { row, column ->
-                val cardLeft = spacingLeft + column * (cardSize + spacing)
-                val cardTop = spacingTop + row * (cardSize + spacing)
-                val cardRight = cardLeft + cardSize
-                val cardBottom = cardTop + cardSize
-                cardLefts[row][column] = cardLeft
-                cardTops[row][column] = cardTop
-                cardRights[row][column] = cardRight
-                cardBottoms[row][column] = cardBottom
+            cardViewSize = (size - 2 * edgeSpacing - (GRID - 1) * spacing) / GRID
+            bigCardViewSize = GRID * cardViewSize + (GRID - 1) * spacing
+            spacingLeft = (widthMeasureSpecSize - bigCardViewSize) / 2
+            spacingRight = widthMeasureSpecSize - spacingLeft - bigCardViewSize
+            spacingTop = (heightMeasureSpecSize - bigCardViewSize) / 2
+            spacingBottom = heightMeasureSpecSize - spacingTop - bigCardViewSize
+            cardViewIndexes { row, column ->
+                val cardLeft = spacingLeft + column * (cardViewSize + spacing)
+                val cardTop = spacingTop + row * (cardViewSize + spacing)
+                val cardRight = cardLeft + cardViewSize
+                val cardBottom = cardTop + cardViewSize
+                cardViewLefts[row][column] = cardLeft
+                cardViewTops[row][column] = cardTop
+                cardViewRights[row][column] = cardRight
+                cardViewBottoms[row][column] = cardBottom
             }
-            bigCardLeft = spacingLeft
-            bigCardTop = spacingTop
-            bigCardRight = bigCardLeft + bigCardSize
-            bigCardBottom = bigCardTop + bigCardSize
-            cardMeasureSpec = MeasureSpec.makeMeasureSpec(cardSize, MeasureSpec.EXACTLY)
-            bigCardMeasureSpec = MeasureSpec.makeMeasureSpec(bigCardSize, MeasureSpec.EXACTLY)
+            bigCardViewLeft = spacingLeft
+            bigCardViewTop = spacingTop
+            bigCardViewRight = bigCardViewLeft + bigCardViewSize
+            bigCardViewBottom = bigCardViewTop + bigCardViewSize
+            cardViewMeasureSpec = MeasureSpec.makeMeasureSpec(cardViewSize, MeasureSpec.EXACTLY)
+            bigCardViewMeasureSpec = MeasureSpec.makeMeasureSpec(bigCardViewSize, MeasureSpec.EXACTLY)
         }
 
         // 测量子视图.
-        cards { it.measure(cardMeasureSpec, cardMeasureSpec) }
-        bigCard.measure(bigCardMeasureSpec, bigCardMeasureSpec)
+        cardViews { it.measure(cardViewMeasureSpec, cardViewMeasureSpec) }
+        bigCardView.measure(bigCardViewMeasureSpec, bigCardViewMeasureSpec)
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         // 布局子视图.
-        cards { layoutCard(it) }
-        bigCard.layout(bigCardLeft, bigCardTop, bigCardRight, bigCardBottom)
-    }
-
-    fun layoutCard(card: Card) {
-        val row = card.row
-        val column = card.column
-        card.layout(
-                cardLefts[row][column],
-                cardTops[row][column],
-                cardRights[row][column],
-                cardBottoms[row][column])
+        cardViewsIndexed { row, column, cardView ->
+            cardView.layout(
+                    cardViewLefts[row][column],
+                    cardViewTops[row][column],
+                    cardViewRights[row][column],
+                    cardViewBottoms[row][column])
+        }
+        bigCardView.layout(bigCardViewLeft, bigCardViewTop, bigCardViewRight, bigCardViewBottom)
     }
 
     /**
@@ -191,7 +187,7 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
      *
      * @param columnExcept 除外的列.
      */
-    fun cardIndexes(rowExcept: Int? = null, columnExcept: Int? = null, action: (row: Int, column: Int) -> Unit) {
+    fun cardViewIndexes(rowExcept: Int? = null, columnExcept: Int? = null, action: (row: Int, column: Int) -> Unit) {
         for (row in 0 until GRID) {
             for (column in 0 until GRID) {
                 if (row == rowExcept && column == columnExcept) continue
@@ -207,8 +203,8 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
      *
      * @param columnExcept 除外的列.
      */
-    fun cards(rowExcept: Int? = null, columnExcept: Int? = null, action: (Card) -> Unit) {
-        cardIndexes(rowExcept, columnExcept) { row, column -> action(cards[row][column]) }
+    fun cardViews(rowExcept: Int? = null, columnExcept: Int? = null, action: (CardView) -> Unit) {
+        cardViewIndexes(rowExcept, columnExcept) { row, column -> action(cardViews[row][column]) }
     }
 
     /**
@@ -218,9 +214,9 @@ class Card16Layout @JvmOverloads constructor(context: Context, attrs: AttributeS
      *
      * @param columnExcept 除外的列.
      */
-    fun cardsIndexed(rowExcept: Int? = null, columnExcept: Int? = null,
-            action: (row: Int, column: Int, Card) -> Unit) {
-        cardIndexes(rowExcept, columnExcept) { row, column -> action(row, column, cards[row][column]) }
+    fun cardViewsIndexed(rowExcept: Int? = null, columnExcept: Int? = null,
+            action: (row: Int, column: Int, CardView) -> Unit) {
+        cardViewIndexes(rowExcept, columnExcept) { row, column -> action(row, column, cardViews[row][column]) }
     }
 
     companion object {

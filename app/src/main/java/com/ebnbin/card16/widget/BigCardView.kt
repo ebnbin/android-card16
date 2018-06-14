@@ -9,11 +9,11 @@ import com.ebnbin.eb.util.dp
 /**
  * 大卡片.
  */
-class BigCard(context: Context) : BaseCard(context, DEF_ELEVATION_DP.dp, DEF_RADIUS_DP.dp) {
+class BigCardView(context: Context) : BaseCardView(context, DEF_ELEVATION_DP.dp, DEF_RADIUS_DP.dp) {
     // TODO
     init {
         cardFrontView = TextView(this.context).apply {
-            text = "BigCard"
+            text = "BigCardView"
         }
     }
 
