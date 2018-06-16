@@ -3,7 +3,7 @@ package com.ebnbin.card16.widget
 import android.content.Context
 import android.util.AttributeSet
 import android.view.ViewGroup
-import com.ebnbin.eb.util.dpInt
+import com.ebnbin.card16.util.dpInt
 import kotlin.math.min
 
 /**

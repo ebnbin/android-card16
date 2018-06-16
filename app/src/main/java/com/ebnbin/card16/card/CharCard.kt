@@ -5,7 +5,7 @@ import android.graphics.Typeface
 import android.view.Gravity
 import android.view.View
 import android.widget.TextView
-import com.ebnbin.eb.util.dp
+import com.ebnbin.card16.util.dp
 
 class CharCard(context: Context) : Card(context) {
     private val frontView = TextView(this.context).apply {

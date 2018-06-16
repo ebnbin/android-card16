@@ -9,9 +9,8 @@ import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import com.ebnbin.card16.card.Card
 import com.ebnbin.card16.card.CharCard
-import com.ebnbin.eb.util.EBRuntimeException
-import com.ebnbin.eb.util.RandomHelper
-import com.ebnbin.eb.util.dp
+import com.ebnbin.card16.util.RandomHelper
+import com.ebnbin.card16.util.dp
 
 /**
  * 卡片.
@@ -138,11 +137,11 @@ class CardView(context: Context, val row: Int, val column: Int) :
             startDelay: Long,
             onStart: ((Animator) -> Unit)?,
             onEnd: ((Animator) -> Unit)?): Animator {
-        if (grid == 0) throw EBRuntimeException()
+        if (grid == 0) throw RuntimeException()
         val newRow = row + if (isHorizontal) 0 else grid
         val newColumn = column + if (isHorizontal) grid else 0
         if (newRow < 0 || newRow >= Card16Layout.GRID || newColumn < 0 || newColumn >= Card16Layout.GRID) {
-            throw EBRuntimeException()
+            throw RuntimeException()
         }
         return AnimatorSet().apply {
             val translationAnimator = ObjectAnimator().apply {

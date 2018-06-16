@@ -1,5 +1,15 @@
 package com.ebnbin.card16
 
-import com.ebnbin.eb.app.EBApplication
+import android.app.Application
 
-class AppApplication : EBApplication()
+class AppApplication : Application() {
+    override fun onCreate() {
+        instance = this
+
+        super.onCreate()
+    }
+
+    companion object {
+        lateinit var instance: AppApplication private set
+    }
+}

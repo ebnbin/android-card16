@@ -11,8 +11,8 @@ import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
 import com.ebnbin.card16.card.Card
-import com.ebnbin.eb.view.centerX
-import com.ebnbin.eb.view.centerY
+import com.ebnbin.card16.util.centerX
+import com.ebnbin.card16.util.centerY
 
 /**
  * 基础卡片.

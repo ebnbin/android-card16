@@ -4,7 +4,7 @@ import android.animation.Animator
 import android.content.Context
 import com.ebnbin.card16.card.Card
 import com.ebnbin.card16.card.NewCard
-import com.ebnbin.eb.util.dp
+import com.ebnbin.card16.util.dp
 
 /**
  * 大卡片.
